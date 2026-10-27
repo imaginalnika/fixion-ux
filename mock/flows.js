@@ -139,11 +139,11 @@
     },
     bind() {
       MENU.bind();
-      let slotRow = null, beam = null, typer = null;
+      let slotRow = null, beam = null, typer = null, prevSel = 0;
       const slotIndex = () => S.rows.indexOf(slotRow);
       const slotCenter = () => { const rows = M.menuRows(); const r = rows[slotIndex()]; return r ? { x: r.x + r.w / 2, y: r.y + r.h / 2 } : { x: 360, y: 600 }; };
-      function animateOpen(to, ms, then) { const from = slotRow.slot.open, t0 = M.now(); const iv = setInterval(() => { const k = Math.min(1, (M.now() - t0) / ms); slotRow.slot.open = from + (to - from) * (1 - Math.pow(1 - k, 3)); if (k >= 1) { clearInterval(iv); then && then(); } }, 16); }
-      function closeSlot(ms = 200) { if (!slotRow) return; const r = slotRow; animateOpen(0, ms, () => { const i = S.rows.indexOf(r); if (i >= 0) S.rows.splice(i, 1); if (S.sel >= S.rows.length) S.sel = S.rows.length - 1; }); slotRow = null; if (beam) { M.endBeam(beam); beam = null; } }
+      function animateOpen(to, ms, then) { const row = slotRow; if (!row || !row.slot) return then && then(); const from = row.slot.open, t0 = M.now(); const iv = setInterval(() => { const k = Math.min(1, (M.now() - t0) / ms); if (!row.slot) { clearInterval(iv); return; } row.slot.open = from + (to - from) * (1 - Math.pow(1 - k, 3)); if (k >= 1) { clearInterval(iv); then && then(); } }, 16); }
+      function closeSlot(ms = 200) { if (!slotRow) return; const r = slotRow; if (S.sel === S.rows.indexOf(r)) S.sel = prevSel; animateOpen(0, ms, () => { const i = S.rows.indexOf(r); if (i >= 0) S.rows.splice(i, 1); if (S.sel >= S.rows.length) S.sel = S.rows.length - 1; }); slotRow = null; if (beam) { M.endBeam(beam); beam = null; } }
       function landAsRow(sc, then) {
         // the slot becomes an ordinary row: pressed, then performed; the menu stays open long enough to read it
         const r = slotRow; r.slot.state = 'pressed'; r.slot.pressedAt = M.now(); S.confirm = null;
@@ -159,8 +159,10 @@
         if (!S.actMode || !S.target) return;
         const sc = SLOT.scenarios[scn]; M.cancelTimers('slot'); S.thinkingAt = 0;
         if (slotRow) { const i = S.rows.indexOf(slotRow); if (i >= 0) S.rows.splice(i, 1); slotRow = null; }   // a retry replaces the old slot
+        else prevSel = S.sel;
+        // the slot always opens at the very bottom of the menu, below every row; the selection jumps to it
         slotRow = { kind: 'slot', slot: { open: 0, state: 'listening', heard: sc.heard, typed: 0 } };
-        S.rows.splice(S.sel + 1, 0, slotRow); S.confirm = null;
+        S.rows.push(slotRow); S.sel = S.rows.length - 1; S.selAt = M.now(); S.confirm = null;
         S.talk = 'listening';
         animateOpen(1, 220);
         M.tone(880, 0.05, { vol: 0.02, to: 1320 });

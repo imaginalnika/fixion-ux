@@ -40,6 +40,11 @@
   .clip video { width: 100%; border-radius: 6px; background: #000; display: block; }
   .clip b { color: #6fe2c7; } .clip small { color: #a8b4ba; display: block; margin-top: 4px; line-height: 1.45; }
   .clip code { font-size: 11px; }
+  .clips { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+  .clip { background: #111820; border: 1px solid #1e2a30; border-radius: 10px; padding: 8px; }
+  .clip video { width: 100%; border-radius: 6px; background: #000; display: block; }
+  .clip b { color: #6fe2c7; } .clip small { color: #a8b4ba; display: block; margin-top: 4px; line-height: 1.45; }
+  .clip code { font-size: 11px; }
 </style>
 </head>
 <body>
@@ -72,6 +77,23 @@ Where this proposal differs it says so; <code>fix_brief.md</code> lists the delt
 disagreements that need Josh: the menu card&#39;s place (fix10 docks it low near the thumbs; this proposal keeps it
 beside the target) and whether a rewrite may auto-confirm (fix10: after a delay; this proposal: never).</p>
 </blockquote>
+<h3 id="changelog">Changelog</h3>
+<ul>
+<li><p><strong>18:45 JST, Josh on the published proposal:</strong> &quot;make the inspire action at the very bottom. also no need to maintain
+the line&quot;. Read as:</p>
+<ol>
+<li>The spoken (inspire) action&#39;s slot always opens at the <strong>very bottom of the action menu</strong>, below every row, not
+under the selected row. The selection jumps to the slot while speaking. After it is performed, the new row stays
+at the bottom. ✕ while the slot is open puts the selection back on the row it was on.</li>
+<li><strong>No struck-through original.</strong> The heard words morph straight into the judged label, rewrite or not, and no
+strikethrough line is kept in the slot. A gated rewrite still asks &quot;do this instead?&quot; on the strip, without the
+original line. The light ray from the mic to the slot stays: it is a VFX, not the line.</li>
+</ol>
+<p>Changed: §0 rows 9–10, §3a, §3b steps 1, 5 and 7, §4 (slot open, morph; the struck-subline row is removed), §5,
+§8 (P5), the slot mockup and the C clips. Unchanged and open for Josh: the feed&#39;s existing struck-through rewrite
+line at the perform step (fix3 behaviour, part of the transcript, not the slot).</p>
+</li>
+</ul>
 <hr>
 <h2 id="0-the-decisions-in-one-screen">0. The decisions in one screen</h2>
 <table>
@@ -124,12 +146,12 @@ beside the target) and whether a rewrite may auto-confirm (fix10: after a delay;
 </tr>
 <tr>
 <td>9</td>
-<td>Pressing the mic in the menu slides a <strong>slot</strong> open under the selected row (220 ms); a light ray runs from the mic into the slot while speaking; on release the heard words type in (≤400 ms); the judge runs under a thin ray.</td>
+<td>Pressing the mic in the menu slides a <strong>slot</strong> open at the <strong>very bottom of the menu</strong>, below every row, and the selection jumps to it (220 ms); a light ray runs from the mic into the slot while speaking; on release the heard words type in (≤400 ms); the judge runs under a thin ray.</td>
 <td>Josh&#39;s ask; P1 the screenplay is the world</td>
 </tr>
 <tr>
 <td>10</td>
-<td>The judged label <strong>lands in the slot</strong>: the original stays as a struck-through subline for 1.2 s while the label churns in (320 ms). The slot is pressed (same moment as 8), performed, and becomes an ordinary row with a violet dot; the menu stays 1.1 s.</td>
+<td>The judged label <strong>lands in the slot</strong>: the heard words <strong>morph straight into the label</strong> (320 ms glyph churn, rewrite or not); nothing of the original is kept. The slot is pressed (same moment as 8), performed, and becomes an ordinary row with a violet dot, staying at the bottom of the menu; the menu stays 1.1 s.</td>
 <td>F4; P5 intent in, outcome out</td>
 </tr>
 <tr>
@@ -281,7 +303,7 @@ read even under a thumb.</p>
 <h3 id="3a-states">3a. States</h3>
 <pre class="mermaid">stateDiagram-v2
   [*] --&gt; menu_idle: Act mode, a target, a selected row
-  menu_idle --&gt; slot_open: mic down (slot slides open under the selected row, 220 ms#59; ray from mic to slot)
+  menu_idle --&gt; slot_open: mic down (slot slides open at the bottom of the menu, selection jumps to it, 220 ms#59; ray from mic to slot)
   slot_open --&gt; slot_listening: audio flowing (same arming rule as talk)
   slot_listening --&gt; slot_filling: mic up (ray thins#59; heard words type into the slot, ≤ 400 ms)
   slot_filling --&gt; slot_judging: words complete (underline sweeps#59; "judging…" after 2 s)
@@ -302,8 +324,8 @@ read even under a thumb.</p>
   slot_listening --&gt; closed: ✕ mid-speech
   slot_judging --&gt; closed: ✕ while judging (the sidecar's answer is discarded)</pre><h3 id="3b-beat-by-beat">3b. Beat by beat</h3>
 <ol>
-<li><strong>Mic down (violet, in Act mode).</strong> A new row slides open under the selected row: 0→46 px in 220 ms, ease-out,
-the rows below moving with it. The slot is violet-tinted with a dashed border that marches. From the top of the
+<li><strong>Mic down (violet, in Act mode).</strong> A new row slides open at the very bottom of the menu, below every row:
+0→46 px in 220 ms, ease-out, and the selection jumps to it. The slot is violet-tinted with a dashed border that marches. From the top of the
 mic a <strong>ray</strong> rises into the slot: a 26 px additive violet beam with a 9 px warm core, both wobbling in width and
 offset with two slow sines (&quot;fluid&quot;), and <code>✦</code>/<code>·</code> glyph motes drifting up the ray and dying in the slot. The mic&#39;s
 ten orbiting sparks run as today. Over the <code>@</code> nothing (an action is not speech).</li>
@@ -316,12 +338,12 @@ small &quot;judging…&quot; appears at the right of the slot; this covers the 2
 state. At 5 s the sidecar fails open: the words become the label with an &quot;as said&quot; tag and, if the preset is
 hostile, the gate still applies.</li>
 <li><strong>Landed.</strong> The ray ends with a 300 ms fade. The label arrives in the slot:<ul>
-<li>If the judge kept it (<code>ok</code>): the label replaces the words with a 320 ms left-to-right <strong>churn</strong> (each letter
-settles out of <code>@#%&amp;*</code> glyphs, the fix8 banner&#39;s motion) and a rising tone.</li>
-<li>If it was rewritten: the heard words drop to a 13 px struck-through subline (&quot;<del>fly over to her</del> → an
-attempt&quot;) while the label churns in above; the subline fades after 1.2 s. The feed gets the existing
-struck-through rewrite line at the perform step. The morph is the smoothness Josh asked for: no cut, the
-original is visibly <em>becoming</em> the label.</li>
+<li>Kept (<code>ok</code>) or rewritten, the same motion: the heard words <strong>morph straight into the label</strong> with a 320 ms
+left-to-right <strong>churn</strong> (each heard letter turns into <code>@#%&amp;*</code> glyphs and settles as the label&#39;s letter, the
+fix8 banner&#39;s motion) and a rising tone. No struck-through line is kept in the slot. A rewrite is gated (step
+6), so the strip&#39;s &quot;do this instead?&quot; is what tells the player the words were changed. The feed gets the
+existing struck-through rewrite line at the perform step. The morph is the smoothness Josh asked for: no cut,
+the player&#39;s words are visibly <em>becoming</em> the label.</li>
 <li>If it matched an existing verb (<code>duplicate</code>): the slot shows the existing label for 380 ms, then collapses while
 the existing row takes the press. No new row.</li>
 </ul>
@@ -329,7 +351,8 @@ the existing row takes the press. No new row.</li>
 <li><strong>Gate or not.</strong> <code>ok</code>/<code>duplicate</code> at P ≥ 0.75 and a non-hostile preset: the slot is pressed by itself 320 ms
 after landing. Anything else: the ✕/✓ strip opens under the slot and waits. Nothing is performed until ✓.</li>
 <li><strong>Pressed, performed.</strong> Exactly the commit moment of §2c, from the slot. 600 ms later the △ line enters the feed
-and the slot turns into an ordinary row (mint, <code>»</code> if it is a walk-up, a violet dot for 2.6 s that says &quot;new&quot;).
+and the slot turns into an ordinary row at the bottom of the menu (mint, <code>»</code> if it is a walk-up, a violet dot for
+2.6 s that says &quot;new&quot;); learned verbs stay at the bottom of the list after that.
 The menu stays 1.1 s so the player sees the verb they made sitting among the others, then leaves. The verb is in
 the data already (fix3); now the player sees it join.</li>
 <li><strong>Reason.</strong> The slot turns red-tinted: the one-sentence reason in bold red, &quot;hold the mic to try again&quot; at the
@@ -445,7 +468,7 @@ line. Making it final would send the player back through ACT → aim → mic for
 <tr>
 <td>mic down → slot open</td>
 <td>220</td>
-<td>ease-out; siblings move in sync</td>
+<td>ease-out; at the very bottom of the menu, the selection jumps to it</td>
 </tr>
 <tr>
 <td>mic up → words typed</td>
@@ -463,14 +486,9 @@ line. Making it final would send the player back through ACT → aim → mic for
 <td>&quot;as said&quot; tag</td>
 </tr>
 <tr>
-<td>landed → label churn</td>
+<td>landed → heard words morph into the label</td>
 <td>320</td>
-<td>left to right, glyph churn</td>
-</tr>
-<tr>
-<td>landed → struck subline fades</td>
-<td>1200 + 500</td>
-<td></td>
+<td>left to right, glyph churn; rewrite or not</td>
 </tr>
 <tr>
 <td>landed_auto → pressed</td>
@@ -517,7 +535,7 @@ game to ignore late answers (<code>Player#inspired</code> already checks <code>@
 is no barge-in; ACT or ✕ cancels. Walking with the stick is impossible too (up/down only). Leaving Act mode with a
 slot judging cancels it.</li>
 <li><strong>The judge says impossible / forced outcome / multi-step / controls other.</strong> All land as rewrites and gate on ✓
-with the original struck through. The <code>impossible</code> rewrite is the comedy case (&quot;Attempt to fly&quot;); it is shown before
+with the heard words morphing into the rewrite. The <code>impossible</code> rewrite is the comedy case (&quot;Attempt to fly&quot;); it is shown before
 it is performed so the joke is shared, not discovered.</li>
 <li><strong>Slow network 2–5 s.</strong> The words stay in the slot under the sweeping underline; &quot;judging…&quot; after 2 s; at 5 s fail
 open to the words as said, still gated if hostile. The thread-ray stays so the connection between mic and slot
@@ -575,7 +593,8 @@ after the take is final and lifted; the △ line only after the press.</li>
 <li><strong>P4 Speech is the main verb; menus are the bridge.</strong> No words while talking; the slot makes the menu the place
 where speech lands, not a replacement for it.</li>
 <li><strong>P5 Intent in, outcome out.</strong> The gate sits exactly on rewrites, doubt and harm; everything else performs at once.
-The struck-through original keeps the rewrite honest.</li>
+The gated &quot;do this instead?&quot; keeps the rewrite honest: the player watches their words morph into it before it is
+performed.</li>
 <li><strong>P7 Bigger things, bigger effects.</strong> A heard take is a tick; a landing is a press with sparks; a reason is red and
 shakes; a join stays bigger than all of these.</li>
 <li><strong>P9 Timing is most of the feel.</strong> Every transition is under 320 ms except the ones that wait on the network, and
@@ -605,10 +624,10 @@ on a week of live <code>ev: inspire</code> records.</li>
   <div class="clip"><video src="media/a-talk-empty-and-notready.mp4" controls muted playsinline loop preload="metadata"></video><b>A4</b> <code>a-talk-empty-and-notready.mp4</code><small><b>What to watch:</b> Two failure looks: an empty take (grey "didn't catch that" plus the ? over the @), then a release while still arming (amber "let go · hold again", no finalize).</small></div>
   <div class="clip"><video src="media/b-menu-select-confirm.mp4" controls muted playsinline loop preload="metadata"></video><b>B1</b> <code>b-menu-select-confirm.mp4</code><small><b>What to watch:</b> The stick moves the selection up and down only; the ✕/✓ strip opens under the selected row; ✓ gives the commit beat (white wash, hitstop, glyph ring, sparks) before the menu leaves.</small></div>
   <div class="clip"><video src="media/b-menu-cancel-then-confirm.mp4" controls muted playsinline loop preload="metadata"></video><b>B2</b> <code>b-menu-cancel-then-confirm.mp4</code><small><b>What to watch:</b> ✕ closes the menu and leaves Act mode; the menu is reopened and a pick is confirmed with ✓.</small></div>
-  <div class="clip"><video src="media/c-slot-ok-auto.mp4" controls muted playsinline loop preload="metadata"></video><b>C1</b> <code>c-slot-ok-auto.mp4</code><small><b>What to watch:</b> Mic in the menu: a slot slides open under the row, the violet ray runs into it, "tap her on the shoulder" types in, the label "Tap shoulder" churns in, and it is pressed by itself (no gate). It becomes a row with a violet dot while the menu stays.</small></div>
+  <div class="clip"><video src="media/c-slot-ok-auto.mp4" controls muted playsinline loop preload="metadata"></video><b>C1</b> <code>c-slot-ok-auto.mp4</code><small><b>What to watch:</b> Mic in the menu: a slot slides open at the very bottom of the menu and the selection jumps to it, the violet ray runs into it, "tap her on the shoulder" types in, the words morph straight into "Tap shoulder", and it is pressed by itself (no gate). It becomes a row with a violet dot while the menu stays.</small></div>
   <div class="clip"><video src="media/c-slot-ok-ascii.mp4" controls muted playsinline loop preload="metadata"></video><b>C2</b> <code>c-slot-ok-ascii.mp4</code><small><b>What to watch:</b> The same spoken action in the ASCII skin: the slot, ray, churn and auto-press.</small></div>
-  <div class="clip"><video src="media/c-slot-rewrite-gated.mp4" controls muted playsinline loop preload="metadata"></video><b>C3</b> <code>c-slot-rewrite-gated.mp4</code><small><b>What to watch:</b> A rewrite: "fly over to her" stays as a struck-through subline under "Attempt to fly", and the strip asks "do this instead?". Nothing happens until ✓.</small></div>
-  <div class="clip"><video src="media/c-slot-hostile-gated.mp4" controls muted playsinline loop preload="metadata"></video><b>C4</b> <code>c-slot-hostile-gated.mp4</code><small><b>What to watch:</b> A hostile act ("punch her in the jaw as hard as I can" → "Punch hard") always waits for ✓, which is the gate rule that would have stopped the 양 hit.</small></div>
+  <div class="clip"><video src="media/c-slot-rewrite-gated.mp4" controls muted playsinline loop preload="metadata"></video><b>C3</b> <code>c-slot-rewrite-gated.mp4</code><small><b>What to watch:</b> A rewrite at the bottom slot: "fly over to her" morphs straight into "Attempt to fly" with no struck-through line, and the strip asks "do this instead?". Nothing happens until ✓.</small></div>
+  <div class="clip"><video src="media/c-slot-hostile-gated.mp4" controls muted playsinline loop preload="metadata"></video><b>C4</b> <code>c-slot-hostile-gated.mp4</code><small><b>What to watch:</b> A hostile act ("punch her in the jaw as hard as I can" → "Punch hard") morphs in place at the bottom slot and always waits for ✓, which is the gate rule that would have stopped the 양 hit.</small></div>
   <div class="clip"><video src="media/c-slot-duplicate.mp4" controls muted playsinline loop preload="metadata"></video><b>C5</b> <code>c-slot-duplicate.mp4</code><small><b>What to watch:</b> "wave at her" matches the existing Wave: the slot shows it briefly and collapses, and the existing row takes the press. No new row.</small></div>
   <div class="clip"><video src="media/c-slot-reason-retry.mp4" controls muted playsinline loop preload="metadata"></video><b>C6</b> <code>c-slot-reason-retry.mp4</code><small><b>What to watch:</b> A red reason lands in the slot ("You don't have anything to light it with."); holding the mic again replaces it in place without leaving the menu.</small></div>
   <div class="clip"><video src="media/c-slot-say.mp4" controls muted playsinline loop preload="metadata"></video><b>C7</b> <code>c-slot-say.mp4</code><small><b>What to watch:</b> Speech, not an action: "tell her she's beautiful" shows "said ↓", drops into the feed as the player's line, and Act mode leaves.</small></div>

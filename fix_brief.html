@@ -40,6 +40,11 @@
   .clip video { width: 100%; border-radius: 6px; background: #000; display: block; }
   .clip b { color: #6fe2c7; } .clip small { color: #a8b4ba; display: block; margin-top: 4px; line-height: 1.45; }
   .clip code { font-size: 11px; }
+  .clips { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+  .clip { background: #111820; border: 1px solid #1e2a30; border-radius: 10px; padding: 8px; }
+  .clip video { width: 100%; border-radius: 6px; background: #000; display: block; }
+  .clip b { color: #6fe2c7; } .clip small { color: #a8b4ba; display: block; margin-top: 4px; line-height: 1.45; }
+  .clip code { font-size: 11px; }
 </style>
 </head>
 <body>
@@ -231,6 +236,22 @@ principle 10 (nothing kept that was not seen).</li>
 <p>See <code>proposal.md</code> §4. The ones that differ from fix10&#39;s constants: <code>AUTO_PLAIN</code> 90 ticks → 20 ticks (320 ms);
 <code>:reason</code> auto-clear 230 ticks → never; slot open 220 ms (fix10&#39;s <code>slot_height</code> eases over 10 ticks = 167 ms,
 fine); menu stays 400 ms after a pick, 1100 ms after a slot press.</p>
+<h3 id="b10-the-slot-at-the-very-bottom-and-no-struck-through-original-josh-1845-jst">B10. The slot at the very bottom, and no struck-through original (Josh, 18:45 JST)</h3>
+<ul>
+<li><strong>Josh:</strong> &quot;make the inspire action at the very bottom. also no need to maintain the line&quot; (see the proposal&#39;s
+changelog for how it is read).</li>
+<li><strong>Now:</strong> <code>player.rb</code> <code>menu_geo</code> already draws the slot after the visible rows, so it sits at the bottom of the
+<em>visible window</em> (<code>@menu_top</code> … <code>MENU_MAX</code>), not necessarily below every row. <code>action_ui.rb</code> <code>draw_slot10</code>
+draws the heard words as a small grey subline under the churning label when <code>s[:rewritten]</code>.</li>
+<li><strong>Proposal:</strong> while a slot is open, scroll the window so the last row and the slot are visible (<code>@menu_top = [n - MENU_MAX, 0].max</code>) and treat the slot as selected; on ✕, restore the previous <code>@sel</code>. In <code>draw_slot10</code>,
+drop the <code>s[:rewritten] &amp;&amp; s[:heard]</code> subline. Instead, churn from the heard words into the label (the same
+<code>churn_text</code> motion, seeded with <code>s[:heard]</code> rather than blanks), for rewrites and kept labels alike. Append the
+learned verb at the end of <code>@actions</code> so it stays at the bottom once performed. Keep the ray (B1) and the feed&#39;s
+rewrite line.</li>
+<li><strong>Verify:</strong> with a long menu scrolled to the top, hold the mic: the slot opens below the last row and the
+selection jumps to it. Say &quot;fly over to her&quot;: the words morph into &quot;Attempt to fly&quot; with no grey line left. ✓:
+&quot;Attempt to fly&quot; is the last row.</li>
+</ul>
 <hr>
 <h2 id="c-phone-verification-script-390844-dpr-2-colour-then-ascii">C. Phone verification script (390×844, DPR 2, colour then ASCII)</h2>
 <p>Use <code>tools/phone_test.py</code> with <code>--mic-wav</code> for real Soniox takes and <code>--init-js</code> for the slow-audio race
@@ -248,10 +269,11 @@ Settings&quot;, persisting; no card over the <code>@</code>.</li>
 <li><strong>Menu: stick.</strong> Expect: up/down only; sideways does nothing; the strip opens under the selected row 120 ms after
 the stick settles and the rows below move with it; hold-repeat 500/200 ms; ✓ performs with the beat; tapping the
 selected row again performs; ✕ and ACT leave.</li>
-<li><strong>Slot: ok</strong> (&quot;tap her on the shoulder&quot;). Expect: slot opens 220 ms, the ray from the mic, words typed on
-release, label churns in, performs by itself within 320 ms, the new row stays visible 1.1 s with a violet dot,
+<li><strong>Slot: ok</strong> (&quot;tap her on the shoulder&quot;). Expect: slot opens 220 ms at the very bottom of the menu with the
+selection on it, the ray from the mic, words typed on release, the words morph into the label, performs by itself within 320 ms, the new row stays visible 1.1 s with a violet dot,
 <code>ev: inspire</code> shows <code>gate: false</code>.</li>
-<li><strong>Slot: rewrite</strong> (&quot;fly over to her&quot;). Expect: struck-through original under the churning label, the strip with
+<li><strong>Slot: rewrite</strong> (&quot;fly over to her&quot;). Expect: the words morph straight into &quot;Attempt to fly&quot; (no struck-through
+or grey original left in the slot), the strip with
 &quot;do this instead?&quot;, nothing happens until ✓; ✕ closes the slot and the verb is not in the menu afterwards.</li>
 <li><strong>Slot: hostile</strong> (&quot;punch her in the jaw&quot;). Expect: waits for ✓ even at P 0.9; the 양으로 갈겨 버리기 case in 루이
 뉘똥 샾 must wait too.</li>

@@ -137,6 +137,23 @@ See `proposal.md` §4. The ones that differ from fix10's constants: `AUTO_PLAIN`
 `:reason` auto-clear 230 ticks → never; slot open 220 ms (fix10's `slot_height` eases over 10 ticks = 167 ms,
 fine); menu stays 400 ms after a pick, 1100 ms after a slot press.
 
+### B10. The slot at the very bottom, and no struck-through original (Josh, 18:45 JST)
+
+- **Josh:** "make the inspire action at the very bottom. also no need to maintain the line" (see the proposal's
+  changelog for how it is read).
+- **Now:** `player.rb` `menu_geo` already draws the slot after the visible rows, so it sits at the bottom of the
+  *visible window* (`@menu_top` … `MENU_MAX`), not necessarily below every row. `action_ui.rb` `draw_slot10`
+  draws the heard words as a small grey subline under the churning label when `s[:rewritten]`.
+- **Proposal:** while a slot is open, scroll the window so the last row and the slot are visible (`@menu_top =
+  [n - MENU_MAX, 0].max`) and treat the slot as selected; on ✕, restore the previous `@sel`. In `draw_slot10`,
+  drop the `s[:rewritten] && s[:heard]` subline. Instead, churn from the heard words into the label (the same
+  `churn_text` motion, seeded with `s[:heard]` rather than blanks), for rewrites and kept labels alike. Append the
+  learned verb at the end of `@actions` so it stays at the bottom once performed. Keep the ray (B1) and the feed's
+  rewrite line.
+- **Verify:** with a long menu scrolled to the top, hold the mic: the slot opens below the last row and the
+  selection jumps to it. Say "fly over to her": the words morph into "Attempt to fly" with no grey line left. ✓:
+  "Attempt to fly" is the last row.
+
 ---
 
 ## C. Phone verification script (390×844, DPR 2, colour then ASCII)
@@ -156,10 +173,11 @@ Use `tools/phone_test.py` with `--mic-wav` for real Soniox takes and `--init-js`
 5. **Menu: stick.** Expect: up/down only; sideways does nothing; the strip opens under the selected row 120 ms after
    the stick settles and the rows below move with it; hold-repeat 500/200 ms; ✓ performs with the beat; tapping the
    selected row again performs; ✕ and ACT leave.
-6. **Slot: ok** ("tap her on the shoulder"). Expect: slot opens 220 ms, the ray from the mic, words typed on
-   release, label churns in, performs by itself within 320 ms, the new row stays visible 1.1 s with a violet dot,
+6. **Slot: ok** ("tap her on the shoulder"). Expect: slot opens 220 ms at the very bottom of the menu with the
+   selection on it, the ray from the mic, words typed on release, the words morph into the label, performs by itself within 320 ms, the new row stays visible 1.1 s with a violet dot,
    `ev: inspire` shows `gate: false`.
-7. **Slot: rewrite** ("fly over to her"). Expect: struck-through original under the churning label, the strip with
+7. **Slot: rewrite** ("fly over to her"). Expect: the words morph straight into "Attempt to fly" (no struck-through
+   or grey original left in the slot), the strip with
    "do this instead?", nothing happens until ✓; ✕ closes the slot and the verb is not in the menu afterwards.
 8. **Slot: hostile** ("punch her in the jaw"). Expect: waits for ✓ even at P 0.9; the 양으로 갈겨 버리기 case in 루이
    뉘똥 샾 must wait too.

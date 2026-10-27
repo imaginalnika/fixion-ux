@@ -21,6 +21,21 @@ just being in the scene".
 > disagreements that need Josh: the menu card's place (fix10 docks it low near the thumbs; this proposal keeps it
 > beside the target) and whether a rewrite may auto-confirm (fix10: after a delay; this proposal: never).
 
+### Changelog
+
+- **18:45 JST, Josh on the published proposal:** "make the inspire action at the very bottom. also no need to maintain
+  the line". Read as:
+  1. The spoken (inspire) action's slot always opens at the **very bottom of the action menu**, below every row, not
+     under the selected row. The selection jumps to the slot while speaking. After it is performed, the new row stays
+     at the bottom. ✕ while the slot is open puts the selection back on the row it was on.
+  2. **No struck-through original.** The heard words morph straight into the judged label, rewrite or not, and no
+     strikethrough line is kept in the slot. A gated rewrite still asks "do this instead?" on the strip, without the
+     original line. The light ray from the mic to the slot stays: it is a VFX, not the line.
+
+  Changed: §0 rows 9–10, §3a, §3b steps 1, 5 and 7, §4 (slot open, morph; the struck-subline row is removed), §5,
+  §8 (P5), the slot mockup and the C clips. Unchanged and open for Josh: the feed's existing struck-through rewrite
+  line at the perform step (fix3 behaviour, part of the transcript, not the slot).
+
 ---
 
 ## 0. The decisions in one screen
@@ -35,8 +50,8 @@ just being in the scene".
 | 6 | The ✕ (red) ✓ (green) pair appears in its own strip **under the selected row**, rows below move down with it (160 ms). ✓ commits; tapping the selected row again also commits; ACT leaves. | Josh's ask; HIG symbols; Xbox A/B colours |
 | 7 | ACT is raised 72 px above the mic's centre line, permanently (the caption moves under it). | F7; Hoober's lower-middle band |
 | 8 | The commit is a moment: press state (white wash 80 ms), hitstop 90 ms, a glyph ring, sparks, a 1800→600 Hz tick; the menu stays 400 ms, then leaves in 200 ms. | P9 timing; 글자들 `contact()` |
-| 9 | Pressing the mic in the menu slides a **slot** open under the selected row (220 ms); a light ray runs from the mic into the slot while speaking; on release the heard words type in (≤400 ms); the judge runs under a thin ray. | Josh's ask; P1 the screenplay is the world |
-| 10 | The judged label **lands in the slot**: the original stays as a struck-through subline for 1.2 s while the label churns in (320 ms). The slot is pressed (same moment as 8), performed, and becomes an ordinary row with a violet dot; the menu stays 1.1 s. | F4; P5 intent in, outcome out |
+| 9 | Pressing the mic in the menu slides a **slot** open at the **very bottom of the menu**, below every row, and the selection jumps to it (220 ms); a light ray runs from the mic into the slot while speaking; on release the heard words type in (≤400 ms); the judge runs under a thin ray. | Josh's ask; P1 the screenplay is the world |
+| 10 | The judged label **lands in the slot**: the heard words **morph straight into the label** (320 ms glyph churn, rewrite or not); nothing of the original is kept. The slot is pressed (same moment as 8), performed, and becomes an ordinary row with a violet dot, staying at the bottom of the menu; the menu stays 1.1 s. | F4; P5 intent in, outcome out |
 | 11 | **Gate rule (Q2):** a spoken action performs at once when the judge said `ok` or `duplicate` with P ≥ 0.75 **and** the preset is not hostile. Any rewrite, any doubt, any hostile act (hit/shoot/shove/grab) waits in the slot for ✓/✕. | P5, P10; F1 (the 양 hit) |
 | 12 | A red **reason** lands in the same slot, bold red, with the feed copy as today. **Not final (Q4):** the slot stays; holding the mic again replaces it; ✕ or the stick closes it. | P5 fail open; Seaman/Pikachu beats for *no input*, honest status for *system* |
 | 13 | `say` (it was speech): the words drop out of the slot into the feed as the player's line; Act mode leaves 400 ms later. | ontology §11 |
@@ -174,7 +189,7 @@ read even under a thumb.
 ```mermaid
 stateDiagram-v2
   [*] --> menu_idle: Act mode, a target, a selected row
-  menu_idle --> slot_open: mic down (slot slides open under the selected row, 220 ms; ray from mic to slot)
+  menu_idle --> slot_open: mic down (slot slides open at the bottom of the menu, selection jumps to it, 220 ms; ray from mic to slot)
   slot_open --> slot_listening: audio flowing (same arming rule as talk)
   slot_listening --> slot_filling: mic up (ray thins; heard words type into the slot, ≤ 400 ms)
   slot_filling --> slot_judging: words complete (underline sweeps; "judging…" after 2 s)
@@ -198,8 +213,8 @@ stateDiagram-v2
 
 ### 3b. Beat by beat
 
-1. **Mic down (violet, in Act mode).** A new row slides open under the selected row: 0→46 px in 220 ms, ease-out,
-   the rows below moving with it. The slot is violet-tinted with a dashed border that marches. From the top of the
+1. **Mic down (violet, in Act mode).** A new row slides open at the very bottom of the menu, below every row:
+   0→46 px in 220 ms, ease-out, and the selection jumps to it. The slot is violet-tinted with a dashed border that marches. From the top of the
    mic a **ray** rises into the slot: a 26 px additive violet beam with a 9 px warm core, both wobbling in width and
    offset with two slow sines ("fluid"), and `✦`/`·` glyph motes drifting up the ray and dying in the slot. The mic's
    ten orbiting sparks run as today. Over the `@` nothing (an action is not speech).
@@ -212,18 +227,19 @@ stateDiagram-v2
    state. At 5 s the sidecar fails open: the words become the label with an "as said" tag and, if the preset is
    hostile, the gate still applies.
 5. **Landed.** The ray ends with a 300 ms fade. The label arrives in the slot:
-   - If the judge kept it (`ok`): the label replaces the words with a 320 ms left-to-right **churn** (each letter
-     settles out of `@#%&*` glyphs, the fix8 banner's motion) and a rising tone.
-   - If it was rewritten: the heard words drop to a 13 px struck-through subline ("~~fly over to her~~ → an
-     attempt") while the label churns in above; the subline fades after 1.2 s. The feed gets the existing
-     struck-through rewrite line at the perform step. The morph is the smoothness Josh asked for: no cut, the
-     original is visibly *becoming* the label.
+   - Kept (`ok`) or rewritten, the same motion: the heard words **morph straight into the label** with a 320 ms
+     left-to-right **churn** (each heard letter turns into `@#%&*` glyphs and settles as the label's letter, the
+     fix8 banner's motion) and a rising tone. No struck-through line is kept in the slot. A rewrite is gated (step
+     6), so the strip's "do this instead?" is what tells the player the words were changed. The feed gets the
+     existing struck-through rewrite line at the perform step. The morph is the smoothness Josh asked for: no cut,
+     the player's words are visibly *becoming* the label.
    - If it matched an existing verb (`duplicate`): the slot shows the existing label for 380 ms, then collapses while
      the existing row takes the press. No new row.
 6. **Gate or not.** `ok`/`duplicate` at P ≥ 0.75 and a non-hostile preset: the slot is pressed by itself 320 ms
    after landing. Anything else: the ✕/✓ strip opens under the slot and waits. Nothing is performed until ✓.
 7. **Pressed, performed.** Exactly the commit moment of §2c, from the slot. 600 ms later the △ line enters the feed
-   and the slot turns into an ordinary row (mint, `»` if it is a walk-up, a violet dot for 2.6 s that says "new").
+   and the slot turns into an ordinary row at the bottom of the menu (mint, `»` if it is a walk-up, a violet dot for
+   2.6 s that says "new"); learned verbs stay at the bottom of the list after that.
    The menu stays 1.1 s so the player sees the verb they made sitting among the others, then leaves. The verb is in
    the data already (fix3); now the player sees it join.
 8. **Reason.** The slot turns red-tinted: the one-sentence reason in bold red, "hold the mic to try again" at the
@@ -272,12 +288,11 @@ line. Making it final would send the player back through ACT → aim → mic for
 | commit: ring / sparks / flash | 600 / 300–600 / 2 frames | glyph ring `·`→`.` |
 | commit → △ line | 520 | |
 | menu leaves after a pick | 400 + 200 | ease-in |
-| mic down → slot open | 220 | ease-out; siblings move in sync |
+| mic down → slot open | 220 | ease-out; at the very bottom of the menu, the selection jumps to it |
 | mic up → words typed | 18 per char, ≤ 400 | blinking `_` |
 | judging → "judging…" caption | 2000 | |
 | judging → fail open | 5000 | "as said" tag |
-| landed → label churn | 320 | left to right, glyph churn |
-| landed → struck subline fades | 1200 + 500 | |
+| landed → heard words morph into the label | 320 | left to right, glyph churn; rewrite or not |
 | landed_auto → pressed | 320 | |
 | pressed → performed (△ line) | 600 | slot becomes a row |
 | performed → menu leaves | 1100 + 200 | |
@@ -300,7 +315,7 @@ line. Making it final would send the player back through ACT → aim → mic for
   is no barge-in; ACT or ✕ cancels. Walking with the stick is impossible too (up/down only). Leaving Act mode with a
   slot judging cancels it.
 - **The judge says impossible / forced outcome / multi-step / controls other.** All land as rewrites and gate on ✓
-  with the original struck through. The `impossible` rewrite is the comedy case ("Attempt to fly"); it is shown before
+  with the heard words morphing into the rewrite. The `impossible` rewrite is the comedy case ("Attempt to fly"); it is shown before
   it is performed so the joke is shared, not discovered.
 - **Slow network 2–5 s.** The words stay in the slot under the sweeping underline; "judging…" after 2 s; at 5 s fail
   open to the words as said, still gated if hostile. The thread-ray stays so the connection between mic and slot
@@ -361,7 +376,8 @@ line. Making it final would send the player back through ACT → aim → mic for
 - **P4 Speech is the main verb; menus are the bridge.** No words while talking; the slot makes the menu the place
   where speech lands, not a replacement for it.
 - **P5 Intent in, outcome out.** The gate sits exactly on rewrites, doubt and harm; everything else performs at once.
-  The struck-through original keeps the rewrite honest.
+  The gated "do this instead?" keeps the rewrite honest: the player watches their words morph into it before it is
+  performed.
 - **P7 Bigger things, bigger effects.** A heard take is a tick; a landing is a press with sparks; a reason is red and
   shakes; a join stays bigger than all of these.
 - **P9 Timing is most of the feel.** Every transition is under 320 ms except the ones that wait on the network, and

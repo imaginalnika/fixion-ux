@@ -171,6 +171,17 @@
     return out;
   }
 
+  function morphText(from, to, k) { // k 0..1: from's letters churn and settle into to's, left to right
+    const n = Math.max(from.length, to.length); let out = '';
+    for (let i = 0; i < n; i++) {
+      const settleAt = (i / Math.max(1, n - 1)) * 0.8 + ((i * 7919) % 13) / 13 * 0.2;
+      if (k >= settleAt) out += to[i] || '';
+      else if (k >= settleAt * 0.45) { const ch = to[i] || from[i] || ' '; out += ch === ' ' ? ' ' : CHURN[(Math.floor(now / 38) + i * 3) % CHURN.length]; }
+      else out += from[i] || '';
+    }
+    return out.replace(/\s+$/, '');
+  }
+
   // ------------------------------------------------------------------ layout bits
   function actBtn() { return S.actRaised ? { x: ACT_BASE.x, y: ACT_BASE.y - 72, r: ACT_BASE.r } : ACT_BASE; }
   function menuRows() {
@@ -343,7 +354,7 @@
     ctx.restore();
   }
 
-  // the slot a spoken action lands in (slides open under the selected row)
+  // the slot a spoken action lands in (always slides open at the very bottom of the menu)
   function drawSlot(row) {
     const s = row.slot; const mid = row.y + row.h / 2; const k = s.open;
     if (k < 0.05) return;
@@ -363,16 +374,10 @@
       text(lx, mid, shown + (st === 'filling' && Math.floor(now / 300) % 2 ? '_' : ''), row.fs, '#e6dcff');
       if (st === 'judging') { const w = width(shown, row.fs); const u = (now / 900) % 1; ctx.fillStyle = hexA(C.violet, 0.9); ctx.fillRect(lx + w * u, row.y + row.h - 9, Math.max(8, w * 0.18), 2); if (s.slowSince && now - s.slowSince > 2000) text(row.x + row.w - 12, mid, 'judging…', 13, '#9c8cc8', { align: 'right' }); }
     } else if (st === 'landed' || st === 'pressed') {
-      // original → rewritten: the original slides down into a small struck line and fades; the label churns in
+      // the heard words morph straight into the judged label (rewrite or not): letter by letter, left to right,
+      // each heard letter churns through glyphs and settles as the label's letter; nothing of the original is kept
       const mk = clamp((now - s.landedAt) / 320, 0, 1);
-      const label = s.rewritten ? churnText(s.label, mk) : s.label;
-      text(lx, mid - (s.rewritten ? 7 * mk : 0), label, row.fs, C.paper);
-      if (s.rewritten) {
-        const fade = clamp(1 - (now - s.landedAt - 1200) / 500, 0, 1) * mk;
-        const sub = s.heard; const sw = width(sub, 13);
-        text(lx, mid + 14, sub, 13, '#9aa3a8', { alpha: 0.8 * fade }); ctx.globalAlpha = fade; ctx.strokeStyle = '#c47878'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(lx - 2, mid + 14); ctx.lineTo(lx + sw + 2, mid + 14); ctx.stroke(); ctx.globalAlpha = 1;
-        text(lx + sw + 10, mid + 14, '→ ' + s.why, 13, '#9c8cc8', { alpha: 0.8 * fade });
-      }
+      text(lx, mid, mk < 1 ? morphText(s.heard, s.label, mk) : s.label, row.fs, C.paper);
       if (st === 'landed' && s.walk) text(row.x + row.w - 12, mid, '»', row.fs, '#96aab0', { align: 'right' });
       disk(row.x + row.w - 8, row.y + 10, 4, C.violet);
     } else if (st === 'reason') {
