@@ -93,7 +93,8 @@
     menuOpenAt: 0, menuCloseAt: 0,
     responder: null, thinkingAt: 0,
     captionText: null, captionAt: 0, captionCol: C.muted,
-    actRaised: true,
+    micBlocked: false,       // the one persistent mic state: permission denied
+    micNopeAt: -9,           // a tiny shake of the mic button: nothing was sent
     stick: null,             // { dir, since }
     stickKnob: { dx: 0, dy: 0 },
     pressed: null,           // { row, at }
@@ -167,7 +168,7 @@
   }
 
   // ------------------------------------------------------------------ layout bits
-  function actBtn() { return S.actRaised ? { x: ACT_BASE.x, y: ACT_BASE.y - 72, r: ACT_BASE.r } : ACT_BASE; }
+  function actBtn() { return ACT_BASE; }   // ACT is not lifted (the 72 px raise was undone, Josh post-fix10)
   function menuRows() {
     // beside the target: right of it if room, else left; rows 46 px, head 34; always inside the play area
     if (!S.actMode || !S.target || !S.rows.length) return [];
@@ -268,9 +269,8 @@
 
   // Josh: the green indicator above the player while speaking, in both skins: five level bars and a glow.
   function drawTalkIndicator(c) {
-    if (S.talk === 'nothing' && S.take) { const k = clamp((now - S.take.at) / 1200, 0, 1); text(c.x + 14, c.y - 30 - 6 * k, '?', 20, '#8a949c', { align: 'center', alpha: 1 - k }); }
-    if (S.talk !== 'listening' && S.talk !== 'arming') return;
-    const y = c.y - 38; const arming = S.talk === 'arming';
+    if (S.talk !== 'listening') return;   // only while audio is actually flowing; nothing over the @ while arming
+    const y = c.y - 38; const arming = false;
     if (skin === 'color') glow(c.x, y, 30, arming ? 'rgba(200,210,220,0.8)' : 'rgba(60,255,140,0.9)', arming ? 0.12 : 0.35);
     const n = 5; const bw = 4, gapw = 4;
     for (let i = 0; i < n; i++) {
@@ -282,7 +282,6 @@
       if (skin === 'ascii') { text(x + bw / 2, y, lv > 0.55 ? '|' : lv > 0.2 ? ':' : '.', 18, arming ? '#8a949c' : C.talk, { align: 'center' }); }
       else ctx.fillRect(x, y - h / 2, bw, h);
     }
-    if (arming) text(c.x, y - 22, '…', 16, '#8a949c', { align: 'center' });
   }
 
   function drawTarget() {
@@ -381,7 +380,7 @@
   // ------------------------------------------------------------------ draw: the deck
   function drawDeck() {
     ctx.fillStyle = '#06080c'; ctx.fillRect(0, DECK_TOP, W, H - DECK_TOP); ctx.fillStyle = hexA(C.mint, 0.1); ctx.fillRect(0, DECK_TOP, W, 1);
-    drawFeed(); drawTakeCard(); drawPad(); drawMic(); drawAct();
+    drawFeed(); drawPad(); drawMic(); drawAct();
   }
 
   function drawPad() {
@@ -412,6 +411,8 @@
       return;
     }
     const arming = S.talk === 'arming';
+    const nope = now - S.micNopeAt < 240 ? Math.sin((now - S.micNopeAt) * 0.09) * 6 * (1 - (now - S.micNopeAt) / 240) : 0;
+    ctx.save(); ctx.translate(nope, 0); if (S.micBlocked) ctx.globalAlpha = 0.45;
     if (skin === 'color') { glow(m.x, m.y, r * 1.6, held && !arming ? 'rgba(80,255,150,0.9)' : hexA(C.mint, 0.9), held && !arming ? 0.55 : 0.18); }
     const g = ctx.createRadialGradient(m.x, m.y - r * 0.3, 4, m.x, m.y, r); if (held && !arming) { g.addColorStop(0, '#46c882'); g.addColorStop(1, '#145a3c'); } else { g.addColorStop(0, '#22343a'); g.addColorStop(1, '#0e161c'); }
     disk(m.x, m.y, r, g); ring(m.x, m.y, r, held && !arming ? '#aaffd2' : arming ? '#c0c8d0' : hexA(C.mint, 0.75), 4);
@@ -421,14 +422,10 @@
     const mc = held && !arming ? '#f0fff6' : '#aae6d2';
     if (skin === 'ascii') { text(m.x, m.y - 10, '(=)', 36, mc, { align: 'center' }); text(m.x, m.y + 22, 'T', 30, mc, { align: 'center' }); }
     else { rrect(m.x - 12, m.y - 34, 24, 44, 12, mc); ctx.strokeStyle = mc; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(m.x, m.y - 6, 24, 0.15 * Math.PI, 0.85 * Math.PI); ctx.stroke(); ctx.fillRect(m.x - 2, m.y + 18, 4, 16); ctx.fillRect(m.x - 16, m.y + 32, 32, 4); }
-    // result tick / cross on the button itself (300 ms), so the eye that is on the thumb sees it
-    if (S.take && now - S.take.at < 420 && (S.take.kind === 'heard' || S.take.kind === 'failed' || S.take.kind === 'nothing')) {
-      const k = easeOutBack((now - S.take.at) / 300); const col = S.take.kind === 'heard' ? C.talk : S.take.kind === 'failed' ? '#ffb070' : '#b0bcc4';
-      ctx.save(); ctx.translate(m.x + r * 0.62, m.y - r * 0.62); ctx.scale(k, k); disk(0, 0, 18, '#0a1a14'); ring(0, 0, 18, col, 2); text(0, 1, S.take.kind === 'heard' ? '✓' : S.take.kind === 'failed' ? '!' : '?', 22, col, { align: 'center', weight: 800 }); ctx.restore();
-    }
-    if (S.talk === 'finalizing') { for (let i = 0; i < 8; i++) { const ang = now * 0.006 + i * Math.PI / 4; disk(m.x + Math.cos(ang) * r * 0.78, m.y + Math.sin(ang) * r * 0.78, 3, '#c8ffdc', (i + 1) / 8); } }
-    const cap = S.talk === 'failed' ? (S.take && S.take.kind === 'warming' ? 'LET GO · HOLD AGAIN' : 'MIC NOT READY · TAP TO RETRY') : S.talk === 'arming' ? 'MIC WARMING' : S.talk === 'nothing' ? "DIDN'T CATCH THAT" : (held || S.talk === 'finalizing') ? '' : 'HOLD TO TALK';
-    if (cap) spaced(m.x, m.y + m.r + 26, cap, S.talk === 'failed' ? 13 : 15, S.talk === 'failed' ? '#ffb070' : S.talk === 'nothing' ? '#b0bcc4' : '#c8dcd7', S.talk === 'failed' ? 0.95 : 0.75);
+    ctx.restore();
+    if (S.micBlocked) { ctx.strokeStyle = '#ffb070'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(m.x - r * 0.55, m.y + r * 0.55); ctx.lineTo(m.x + r * 0.55, m.y - r * 0.55); ctx.stroke(); }
+    // a fixed button label, not a stage label; the one exception is a blocked mic, which the player has to fix
+    if (!held) spaced(m.x, m.y + m.r + 26, S.micBlocked ? 'MIC BLOCKED' : 'HOLD TO TALK', 15, S.micBlocked ? '#ffb070' : '#c8dcd7', 0.75);
   }
 
   function drawAct() {
@@ -457,28 +454,6 @@
       }
       y += lh;
     }
-  }
-
-  // the take card: rises from the mic on release with the partial words, solidifies when final, then lifts into the feed
-  function drawTakeCard() {
-    const t = S.take; if (!t) return;
-    const age = now - t.at;
-    const x = W / 2, baseY = MIC.y - MIC.r - 40;
-    let y = baseY, alpha = 1, sc = 1;
-    if (t.phase === 'rise') { const k = easeOutBack(age / 220); y = baseY + 24 * (1 - k); alpha = clamp(age / 120, 0, 1); }
-    if (t.phase === 'lift') { const k = easeIn(age / 260); y = lerp(baseY, FEED.top + 14 + 29 * 3, k); alpha = 1 - k * 0.3; sc = lerp(1, 0.86, k); }
-    if (t.phase === 'gone') return;
-    const label = t.kind === 'warming' ? 'mic was still warming — hold again' : t.kind === 'failed' ? (t.text || 'mic not ready') : t.kind === 'nothing' ? "didn't catch that" : (t.partial ? t.text + '…' : t.text);
-    const fsz = 22 * sc; const w = width(label, fsz, t.kind === 'heard' && !t.partial ? 700 : 400) + 40;
-    const col = t.kind === 'heard' ? (t.partial ? '#9fd9c4' : '#7cd6ba') : t.kind === 'failed' || t.kind === 'warming' ? '#ffb070' : '#b0bcc4';
-    const bg = t.kind === 'heard' ? (t.partial ? 'rgba(14,32,28,0.9)' : 'rgba(18,48,40,0.96)') : t.kind === 'nothing' ? 'rgba(20,26,32,0.95)' : 'rgba(60,32,12,0.95)';
-    ctx.save(); ctx.globalAlpha = alpha;
-    rrect(x - w / 2, y - 20 * sc, w, 40 * sc, 8, bg, 1, hexA(col === '#7cd6ba' ? C.mint : col, t.partial ? 0.35 : 0.8), 1.5);
-    if (t.partial) { ctx.setLineDash([5, 5]); ctx.lineDashOffset = -now * 0.03; rrect(x - w / 2, y - 20 * sc, w, 40 * sc, 8, null, 1, hexA(C.mint, 0.6), 1.5); ctx.setLineDash([]); }
-    text(x, y, label, fsz, col, { align: 'center', weight: t.kind === 'heard' && !t.partial ? 700 : 400 });
-    // tail to the mic
-    if (t.phase !== 'lift') { ctx.fillStyle = bg; ctx.beginPath(); ctx.moveTo(x - 7, y + 20 * sc); ctx.lineTo(x + 7, y + 20 * sc); ctx.lineTo(x, y + 28 * sc); ctx.closePath(); ctx.fill(); }
-    ctx.restore();
   }
 
   function drawThinking() {
@@ -530,7 +505,6 @@
     let ox = 0, oy = 0; if (now < FX.shakeUntil) { const k = (FX.shakeUntil - now) / 300; ox = (Math.random() - 0.5) * FX.shake * k; oy = (Math.random() - 0.5) * FX.shake * k; }
     ctx.translate(ox, oy);
     drawMap(); drawActors(); drawTarget(); drawThinking(); drawCaption(); drawDeck(); drawMenu(); drawFx();
-    if (S.hint) { const w = width(S.hint, 17) + 24; rrect(W / 2 - w / 2, HEADER_Y + 72, w, 30, 4, 'rgba(8,11,16,0.85)'); text(W / 2, HEADER_Y + 87, S.hint, 17, '#c8dcd7', { align: 'center', alpha: 0.9 }); }
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
@@ -582,7 +556,8 @@
     S, FX, C, actors, hooks, MIC, PAD, actBtn, cellCenter, menuRows, after, cancelTimers, hitstop, tone, flash, shake, sparks, addRing,
     now: () => now, skin: () => skin, setSkin: (s) => { skin = s; },
     feed(text, who, extra) { S.feed.push(Object.assign({ text, who, at: now }, extra || {})); while (S.feed.length > 20) S.feed.shift(); },
+    micNope() { S.micNopeAt = now; },
     caption(t, col) { S.captionText = t; S.captionAt = now; S.captionCol = col || C.muted; },
-    reset() { cancelTimers(); S.talk = 'idle'; S.take = null; S.feed.length = 0; S.actMode = false; S.target = null; S.rows = []; S.sel = 0; S.confirm = null; S.pressed = null; S.responder = null; S.thinkingAt = 0; S.captionText = null; S.hint = ''; FX.parts.length = 0; FX.rings.length = 0; FX.flashA = 0; hitstopUntil = 0; },
+    reset() { cancelTimers(); S.talk = 'idle'; S.take = null; S.micBlocked = false; S.micNopeAt = -9; S.feed.length = 0; S.actMode = false; S.target = null; S.rows = []; S.sel = 0; S.confirm = null; S.pressed = null; S.responder = null; S.thinkingAt = 0; S.captionText = null; S.hint = ''; FX.parts.length = 0; FX.rings.length = 0; FX.flashA = 0; hitstopUntil = 0; },
   };
 })();

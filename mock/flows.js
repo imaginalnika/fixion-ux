@@ -27,43 +27,33 @@
       denied: { arm: 0, denied: true, text: '' }
     },
     bind() {
-      let armTimer = null, partialIdx = 0;
+      // Josh, post-fix10: plain talking is invisible. No live transcript, no card or pill, no stage labels: the line
+      // just goes into the feed. The only talk feedback is on the mic button itself (press state, a dashed ring while
+      // the audio is not flowing yet, a tiny shake if nothing was sent) and the green level bars over the @.
       M.hooks.onMicDown = () => {
         const sc = TALK.scenarios[scn];
         if (S.talk === 'listening' || S.talk === 'arming' || S.talk === 'finalizing') return;
         S.thinkingAt = 0; S.responder = null; M.cancelTimers('talk');
-        if (sc.denied) { S.talk = 'failed'; S.take = { kind: 'failed', text: 'microphone blocked · allow it in Settings', at: M.now(), phase: 'rise' }; M.tone(220, 0.2, { type: 'square', vol: 0.03 }); return; }
-        S.talk = 'arming'; S.take = null; partialIdx = 0;
+        if (sc.denied) { S.talk = 'idle'; S.micBlocked = true; M.micNope(); M.tone(220, 0.2, { type: 'square', vol: 0.03 }); return; }
+        S.talk = 'arming';
         M.tone(880, 0.04, { vol: 0.02 });
-        armTimer = M.after(sc.arm, () => { S.talk = 'listening'; M.tone(1320, 0.05, { vol: 0.03 }); }, 'talk');
-        // after 2.5 s still arming: say so where the thumb is
-        M.after(2500, () => { if (S.talk === 'arming') S.hint = 'mic not ready · let go and hold again'; }, 'talk');
+        M.after(sc.arm, () => { if (S.talk === 'arming') { S.talk = 'listening'; M.tone(1320, 0.05, { vol: 0.03 }); } }, 'talk');
       };
       M.hooks.onMicUp = () => {
         const sc = TALK.scenarios[scn];
         if (S.talk === 'arming') {
-          // released before audio flowed: never finalize a socket that got no config; tell the player plainly
-          S.talk = 'failed'; S.hint = ''; S.take = { kind: 'warming', text: '', at: M.now(), phase: 'rise' };
-          M.tone(330, 0.12, { type: 'triangle', vol: 0.03 });
-          M.after(2200, () => { if (S.talk === 'failed') { S.take.phase = 'gone'; S.talk = 'idle'; scn = scn === 'notready' ? 'ok' : scn; } }, 'talk');
+          // released before audio flowed: nothing is sent; the mic itself gives a tiny shake, no text
+          S.talk = 'idle'; M.cancelTimers('talk'); M.micNope(); M.tone(330, 0.12, { type: 'triangle', vol: 0.03 });
+          if (scn === 'notready') scn = 'ok';
           return;
         }
         if (S.talk !== 'listening') return;
         S.talk = 'finalizing'; M.tone(700, 0.05, { vol: 0.02 });
-        if (!sc.text) {
-          M.after(sc.final, () => { S.talk = 'nothing'; S.take = { kind: 'nothing', text: '', at: M.now(), phase: 'rise' }; M.tone(300, 0.1, { type: 'triangle', vol: 0.02 }); M.after(1600, () => { if (S.talk === 'nothing') { S.take.phase = 'gone'; S.talk = 'idle'; } }); }, 'talk');
-          return;
-        }
-        // the take card rises at once with what has been heard so far (non-final tokens), dashed
-        S.take = { kind: 'heard', text: sc.partials[0] || '', partial: true, at: M.now(), phase: 'rise' };
-        const step = Math.max(120, (sc.final - 150) / Math.max(1, sc.partials.length));
-        sc.partials.forEach((p, i) => M.after(120 + i * step, () => { if (S.take && S.take.partial) S.take.text = p; }, 'talk'));
         M.after(sc.final, () => {
-          S.take.partial = false; S.take.text = sc.text; S.take.at = M.now(); S.take.phase = 'rise'; S.talk = 'heard';
-          M.tone(990, 0.06, { vol: 0.035, to: 1480 });
-          M.after(420, () => { S.take.phase = 'lift'; S.take.at = M.now(); });
-          M.after(700, () => { S.take.phase = 'gone'; S.talk = 'idle'; M.feed('ADVENTURER: ' + sc.text, 'player');
-            roomAnswers('Figgs', [{ text: '△ Figgs looks to Nuaz.', who: 'delta', dt: 900 }, { text: "FIGGS: I don't think you have the right bar.", col: C.figgs, dt: 1600 }, { text: 'NUAZ: Yara will be here later.', col: C.nuaz }]); });
+          S.talk = 'idle';
+          if (!sc.text) { M.micNope(); M.tone(300, 0.1, { type: 'triangle', vol: 0.02 }); return; }   // empty take: nothing sent
+          M.feed('ADVENTURER: ' + sc.text, 'player');                                                  // the line just appears
+          roomAnswers('Figgs', [{ text: '△ Figgs looks to Nuaz.', who: 'delta', dt: 900 }, { text: "FIGGS: I don't think you have the right bar.", col: C.figgs, dt: 1600 }, { text: 'NUAZ: Yara will be here later.', col: C.nuaz }]);
         }, 'talk');
       };
     },
@@ -106,7 +96,7 @@
   }
   const MENU = {
     name: 'menu',
-    scenarios: { ok: {}, cancel: {}, lowered: {} },
+    scenarios: { ok: {}, cancel: {} },
     bind() {
       M.hooks.onActTap = () => { if (S.actMode) leaveAct(); else openAct({ name: 'Nuaz', x: 13, y: 4, col: C.nuaz }); };
       M.hooks.onStick = (dir) => { if (!S.actMode) return; if (dir[1] === -1) select(S.sel - 1); if (dir[1] === 1) select(S.sel + 1); };
@@ -116,7 +106,7 @@
       M.hooks.onMicDown = null; M.hooks.onMicUp = null;
     },
     play(name) {
-      scn = name || scn; M.reset(); MENU.bind(); S.actRaised = scn !== 'lowered';
+      scn = name || scn; M.reset(); MENU.bind();
       M.after(600, () => M.hooks.onActTap());
       M.after(1500, () => M.hooks.onStick([0, 1])); M.after(2000, () => M.hooks.onStick([0, 1])); M.after(2500, () => M.hooks.onStick([0, 1]));
       if (scn === 'cancel') { M.after(3600, () => M.hooks.onCancel()); M.after(5200, () => M.hooks.onActTap()); M.after(6200, () => M.hooks.onStick([0, 1])); M.after(7300, () => M.hooks.onConfirm()); }
@@ -217,7 +207,7 @@
   if (bar) {
     const mk = (label, fn, cls) => { const b = document.createElement('button'); b.textContent = label; b.className = cls || ''; b.addEventListener('click', fn); bar.appendChild(b); return b; };
     for (const k of Object.keys(F.scenarios)) mk(k, () => { scn = k; F.play(k); bar.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.textContent === k)); }, k === scn ? 'on' : '');
-    mk('reset', () => { M.reset(); F.bind(); if (flow === 'menu') S.actRaised = scn !== 'lowered'; }, 'alt');
+    mk('reset', () => { M.reset(); F.bind(); }, 'alt');
     mk(M.skin() === 'ascii' ? 'color skin' : 'ascii skin', () => { const u = new URL(location.href); u.searchParams.set('skin', M.skin() === 'ascii' ? 'color' : 'ascii'); location.href = u.toString(); }, 'alt');
   }
   if (qs.get('auto') === '1') { document.fonts.ready.then(() => setTimeout(() => F.play(scn), 300)); }

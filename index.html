@@ -50,13 +50,23 @@
   .clip video { width: 100%; border-radius: 6px; background: #000; display: block; }
   .clip b { color: #6fe2c7; } .clip small { color: #a8b4ba; display: block; margin-top: 4px; line-height: 1.45; }
   .clip code { font-size: 11px; }
+  .clips { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+  .clip { background: #111820; border: 1px solid #1e2a30; border-radius: 10px; padding: 8px; }
+  .clip video { width: 100%; border-radius: 6px; background: #000; display: block; }
+  .clip b { color: #6fe2c7; } .clip small { color: #a8b4ba; display: block; margin-top: 4px; line-height: 1.45; }
+  .clip code { font-size: 11px; }
+  .clips { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+  .clip { background: #111820; border: 1px solid #1e2a30; border-radius: 10px; padding: 8px; }
+  .clip video { width: 100%; border-radius: 6px; background: #000; display: block; }
+  .clip b { color: #6fe2c7; } .clip small { color: #a8b4ba; display: block; margin-top: 4px; line-height: 1.45; }
+  .clip code { font-size: 11px; }
 </style>
 </head>
 <body>
 <main>
   <nav class="mock">
-    <a href="mock/talk.html"><b>Mockup A · talk flow</b>green bars over the @, the take card, failures</a>
-    <a href="mock/menu.html"><b>Mockup B · action menu</b>stick up/down, ✕/✓ strip, raised ACT, the commit</a>
+    <a href="mock/talk.html"><b>Mockup A · talk flow</b>invisible talk: green bars over the @, the line only in the feed</a>
+    <a href="mock/menu.html"><b>Mockup B · action menu</b>stick up/down, ✕/✓ strip, ACT not lifted, the commit</a>
     <a href="mock/slot.html"><b>Mockup C · mic to action</b>the bottom slot, the morph, the gate (no beam)</a>
     <a href="index.html#clips"><b>Clips</b>14 recorded runs of the mockups, A1–C8</a>
     <a href="fix_brief.html"><b>Implementation brief</b>for the round after fix10, by file and function</a>
@@ -84,6 +94,20 @@ beside the target) and whether a rewrite may auto-confirm (fix10: after a delay;
 </blockquote>
 <h3 id="changelog">Changelog</h3>
 <ul>
+<li><p><strong>21:52 JST, Josh after fix10 (relayed by Base Models, approved &quot;yeah&quot;), and his follow-up &quot;what i say shouldn&#39;t be
+on screen, it should only go in feed&quot;:</strong> plain talking is <strong>invisible</strong> again. When the player talks (not an
+action), the line just goes into the feed. There is no live transcript, no take card or pill, no speech bubble or
+caption over the player, no floating text and no stage labels (listening / heard / sent, &quot;MIC WARMING&quot;,
+&quot;didn&#39;t catch that&quot;, &quot;let go · hold again&quot;). The ✓ badge and the finalizing dots on the mic are gone too. ACT is
+<strong>not lifted</strong>: the 72 px raise is undone in the talk, menu and slot mockups and here. Josh&#39;s earlier wish for
+confirmation was about <strong>lost speech</strong>, not visible feedback; it is now an engineering guarantee in the bridge
+(§1c), not a screen element. Kept: the green speaking indicator over the <code>@</code> (Josh asked for it), the mic button&#39;s
+own press state, a dashed arming ring on the button, a tiny button shake when nothing was sent, and &quot;MIC BLOCKED&quot;
+on the button for a denied permission (the one state the player must fix). The action-menu flow is unchanged:
+the slot opens at the bottom, words type into the slot, no beam, the slot flashes, the words morph into the label,
+and it presses or waits for ✓. Changed: §0 rows 1–4 and 7, §1 (all), §2a, §4, §5, §6, §7, §8, §9 Q3, the talk
+and menu mockups, and every clip (the A clips for talk; B and C for ACT&#39;s position).</p>
+</li>
 <li><p><strong>21:38 JST, Josh:</strong> &quot;i also don&#39;t want the &#39;line&#39; or &#39;beam&#39; from action mic to slot.&quot; The mic-to-slot ray is
 <strong>removed</strong> everywhere: no beam, no thread, no glyph motes between the mic and the slot. Everything else in the slot
 flow stays: it opens at the very bottom, the words type in, morph into the label, and press (or wait for ✓). So the
@@ -118,23 +142,23 @@ line at the perform step (fix3 behaviour, part of the transcript, not the slot).
 </thead>
 <tbody><tr>
 <td>1</td>
-<td>While talking: no words on screen, a green mic, and five green level bars over the <code>@</code> in both skins.</td>
+<td>While talking: no words on screen, a green mic, and five green level bars over the <code>@</code> in both skins. What the player says is <strong>never on screen</strong>; it only goes into the feed.</td>
 <td>P4 speech is the main verb; Josh&#39;s capture rule</td>
 </tr>
 <tr>
 <td>2</td>
-<td>On release: a <strong>take card</strong> rises from the mic with the partial words at once (dashed), solidifies when final, ticks on the mic, then lifts into the feed as the player&#39;s line.</td>
-<td>P10 nothing kept that was not seen; Q1 &quot;yes, show&quot;</td>
+<td>On release: <strong>nothing on screen</strong>. No take card, pill, transcript or stage label; the line just appears in the feed as <code>ADVENTURER: …</code>.</td>
+<td>Josh after fix10 (talking is invisible)</td>
 </tr>
 <tr>
 <td>3</td>
-<td>A press never lights green until audio is flowing. Before that the mic is <strong>arming</strong> (grey dashed ring). Releasing while arming never finalizes; it says &quot;let go · hold again&quot;.</td>
+<td>A press never lights green until audio is flowing. Before that the mic is <strong>arming</strong> (grey dashed ring). Releasing while arming never finalizes; the mic button gives a tiny shake, no text.</td>
 <td>F3 (the iOS first-press race); orb-ui&#39;s &quot;connecting&quot; rule</td>
 </tr>
 <tr>
 <td>4</td>
-<td>Four failure kinds, four different looks: <em>arming</em> (grey), <em>didn&#39;t catch that</em> (grey, a <code>?</code> beat over the <code>@</code>), <em>mic not ready</em> (amber, persists, tap to retry), <em>microphone blocked</em> (amber, says where to fix it).</td>
-<td>research §1 Meta&#39;s error types</td>
+<td>Failures stay on the mic button: <em>arming</em> (grey dashed ring), <em>nothing sent</em> (a tiny shake), <em>blocked</em> (greyed with &quot;MIC BLOCKED&quot;, the one persistent state). Socket errors are retried, not shown. Lost speech is prevented in the bridge, not signalled on screen.</td>
+<td>Josh after fix10; research §1</td>
 </tr>
 <tr>
 <td>5</td>
@@ -148,8 +172,8 @@ line at the perform step (fix3 behaviour, part of the transcript, not the slot).
 </tr>
 <tr>
 <td>7</td>
-<td>ACT is raised 72 px above the mic&#39;s centre line, permanently (the caption moves under it).</td>
-<td>F7; Hoober&#39;s lower-middle band</td>
+<td>ACT stays where it is, level with the mic (<strong>not lifted</strong>; the 72 px raise is undone).</td>
+<td>Josh after fix10</td>
 </tr>
 <tr>
 <td>8</td>
@@ -194,60 +218,51 @@ line at the perform step (fix3 behaviour, part of the transcript, not the slot).
 </tbody></table>
 <hr>
 <h2 id="1-the-talk-flow">1. The talk flow</h2>
+<p>Plain talking is <strong>invisible</strong> (Josh, after fix10; see the changelog). What the player says is never drawn on the game
+screen: no live transcript, no take card or pill, no speech bubble or caption over the <code>@</code>, no floating text, no
+stage labels. The words appear in exactly one place, as the <code>ADVENTURER: …</code> line in the feed. The only talk feedback
+is the green indicator over the <code>@</code> while audio flows, and the mic button&#39;s own press state.</p>
 <h3 id="1a-states">1a. States</h3>
 <pre class="mermaid">stateDiagram-v2
   [*] --&gt; idle
-  idle --&gt; arming: mic down (haptic)
+  idle --&gt; arming: mic down (haptic#59; dashed ring on the mic button only)
   arming --&gt; listening: audio flowing (AudioContext running, mic track live, socket configured)
-  arming --&gt; warming_fail: mic up before audio flowed
-  arming --&gt; sys_fail: getUserMedia denied / socket error / 2.5 s without audio
-  listening --&gt; finalizing: mic up (haptic)
-  finalizing --&gt; heard: final text, non-empty
-  finalizing --&gt; nothing: final text empty
-  finalizing --&gt; sys_fail: socket closed / 5 s cap with nothing
-  heard --&gt; sent: take card lifts into the feed (ADVENTURER: …)
+  arming --&gt; idle: mic up before audio flowed (nothing sent#59; the mic gives a tiny shake)
+  arming --&gt; blocked: getUserMedia denied
+  listening --&gt; finalizing: mic up (haptic#59; nothing on screen)
+  finalizing --&gt; sent: final text, non-empty (the line appears in the feed, ADVENTURER: …)
+  finalizing --&gt; idle: final text empty (nothing sent#59; the mic gives a tiny shake)
+  finalizing --&gt; idle: socket closed / 5 s cap (the take is retried from the buffered audio, see 1c)
   sent --&gt; idle: the room answers after the 0.9 s floor
-  nothing --&gt; idle: 1.6 s
-  warming_fail --&gt; idle: 2.2 s (or the next press)
-  sys_fail --&gt; arming: mic down again (tap to retry)</pre><h3 id="1b-what-the-player-sees-state-by-state">1b. What the player sees, state by state</h3>
-<p><strong>idle.</strong> The mic as today: mint ring, &quot;HOLD TO TALK&quot;.</p>
-<p><strong>arming (mic down).</strong> The ring turns grey and dashed and rotates; over the <code>@</code> a faint grey five-bar stub and a
-small &quot;…&quot;. Caption &quot;MIC WARMING&quot;. This is the state the current build does not have, and it is where the thirteen
-empty takes in the audit happened (F3). The green must not come on until the browser reports an audio frame to the
-worklet and the Soniox socket has taken its config message. Typical arming is 60–150 ms on a warm page and is barely
-seen; on a cold iOS page it is 300–2,000 ms and the player must see that something is being set up.</p>
+  blocked --&gt; arming: mic down after the permission is granted</pre><h3 id="1b-what-the-player-sees-state-by-state">1b. What the player sees, state by state</h3>
+<p><strong>idle.</strong> The mic as today: mint ring, the fixed button label &quot;HOLD TO TALK&quot;.</p>
+<p><strong>arming (mic down).</strong> On the mic button only: the ring turns grey and dashed and rotates, the button is pressed
+in. Nothing over the <code>@</code>, no caption. The green must not come on until the browser reports an audio frame to the
+worklet and the Soniox socket has taken its config message (typical 60–150 ms on a warm page, 300–2,000 ms on a cold
+iOS page).</p>
 <p><strong>listening.</strong> The mic turns green with the three pulse rings scaled by level, as today. Over the <code>@</code>: five green
 bars (4 px wide, 4 px apart, 4–24 px tall by level, with the per-bar phase from the web build&#39;s <code>drawVoice</code>), an
 additive green glow behind them in the colour skin, <code>|</code>/<code>:</code>/<code>.</code> glyph columns in the ASCII skin. No words. This is
-the indicator Josh asked back for (18:09), in both skins.</p>
-<p><strong>finalizing (mic up).</strong> The mic shows the eight orbiting dots as today, but now the <strong>take card</strong> rises at once
-(220 ms, ease-out-back) from the top of the mic with whatever has been heard so far, in a dashed mint box with an
-ellipsis: Soniox&#39;s non-final tokens, which the bridge currently throws away. The card updates as tokens arrive.
-Median release-to-final is 2.3 s in the logs (F2); during that time the player reads their own words forming.</p>
-<p><strong>heard.</strong> The card solidifies: solid border, bold text, a ✓ badge pops on the mic&#39;s shoulder (300 ms ease-out-back)
-with a rising two-tone tick. 420 ms later the card <strong>lifts</strong> (260 ms, ease-in, shrinking to 86 %) into the feed and
-becomes the line <code>ADVENTURER: …</code> in the player&#39;s mint, which the fix9 &quot;Show my lines = Yes&quot; default already draws.
-The &quot;…&quot; over the predicted responder appears as today and the floor runs.</p>
-<p><strong>nothing (empty final, the stream had started).</strong> The card says &quot;didn&#39;t catch that&quot; in grey, a <code>?</code> drifts up from
-the <code>@</code> for 1.2 s (the existing beat, kept), the mic caption reads &quot;DIDN&#39;T CATCH THAT&quot; for 1.6 s. This is a
-character beat (Pikachu&#39;s &quot;Pika?&quot;), because the system did its job and heard silence.</p>
-<p><strong>warming_fail (released while arming).</strong> The card is amber: &quot;mic was still warming — hold again&quot;. Caption &quot;LET GO ·
-HOLD AGAIN&quot;. Engineering rule behind it: the bridge must not send silence + <code>finalize</code> to a socket that never got its
-config, and must not open a second socket; the pre-opened one is kept for the next press. The next press on a warm
-page then arms in ~100 ms and the player is talking.</p>
-<p><strong>sys_fail (denied, socket error, nothing after 2.5 s of arming, or a 5 s cap with no final).</strong> The card is
-amber and persists until the next press: &quot;mic not ready · tap to retry&quot;, or &quot;microphone blocked · allow it in
-Settings&quot; for a permission denial. Caption &quot;MIC NOT READY · TAP TO RETRY&quot;. The sidecar gets the client-side reason
-(fix9 §15). This is a system status and must look like one, not like a character beat.</p>
-<h3 id="1c-why-this-and-not-a-transcript-while-talking">1c. Why this and not a transcript while talking</h3>
-<p>Josh&#39;s rule is about capture: while you hold the button, only the green signal. The take card is understanding
-feedback after you let go: the words are shown exactly once, in the moment you are already looking at the mic, and
-then they become the committed line in the feed, which Josh now wants shown by default. The partial words appear
-<em>before</em> the final so the 2 s wait reads as progress, not as a spinner. No new permanent text on the screen.</p>
+the indicator Josh asked back for (18:09), in both skins, and it stays.</p>
+<p><strong>finalizing (mic up).</strong> The bars go, the mic returns to idle. Nothing else on screen: no card, no partial words, no
+dots. Median release-to-final is 2.3 s in the logs (F2); the &quot;…&quot; over the predicted responder is the next thing seen.</p>
+<p><strong>sent.</strong> The line <code>ADVENTURER: …</code> appears in the feed in the player&#39;s mint (the fix9 &quot;Show my lines = Yes&quot; default
+already draws it). That is the only place the player&#39;s words are ever shown. The &quot;…&quot; over the predicted responder
+appears as today and the floor runs.</p>
+<p><strong>Nothing sent (empty final, or released while arming).</strong> The mic button gives one tiny horizontal shake (240 ms)
+and a soft low tone. No text, no <code>?</code> over the <code>@</code>, nothing in the feed.</p>
+<p><strong>blocked (permission denied).</strong> The one persistent state, because the player has to act on it: the mic button
+greys out with an amber slash and its label reads &quot;MIC BLOCKED&quot; until the permission is granted. Socket errors are
+not shown; they are retried (1c).</p>
+<h3 id="1c-why-invisible-and-what-confirmation-means-now">1c. Why invisible, and what &quot;confirmation&quot; means now</h3>
+<p>Josh&#39;s earlier wish for confirmation was about <strong>lost speech</strong>, not visible feedback: speech that was said must not
+silently vanish. That is an engineering guarantee, not a screen element. The bridge buffers audio from the moment of
+mic down (so the arming window does not eat the first words), never sends <code>finalize</code> to a socket that did not get its
+config, keeps the pre-opened socket for the next press, and retries a take whose socket closed from the buffered
+audio. When it works, the proof is the line in the feed and the room answering. The screen stays clean.</p>
 <h3 id="1d-barge-in-while-talking">1d. Barge-in while talking</h3>
-<p>Pressing the mic during a performance cancels it as today. The take card does not change that. If a card from the
-previous take is still lifting when the next press comes, it finishes its lift (260 ms) and the new press starts
-arming; nothing is dropped.</p>
+<p>Pressing the mic during a performance cancels it as today. A press while the previous take is still finalizing
+starts arming at once; the previous take still lands in the feed when its final arrives; nothing is dropped.</p>
 <hr>
 <h2 id="2-the-action-menu">2. The action menu</h2>
 <h3 id="2a-layout">2a. Layout</h3>
@@ -258,10 +273,8 @@ on and the verbs are one glance apart. The alternative (a deck-docked list near 
 rejected: it hides which target you are on and turns the map into a background.</li>
 <li>Rows 46 px, 22 px type, the selected row mint with the <code>›</code> as today; <code>»</code> marks walk-up verbs; item rows keep
 their icons.</li>
-<li><strong>ACT is raised 72 px</strong> (centre at the mic&#39;s centre minus 72 in DR&#39;s y-up coordinates), its caption moves under
-it, size unchanged (r 56). The lower-middle band is where a two-thumb grip on a portrait phone actually rests
-(Hoober); the very bottom was chosen for symmetry with the mic, not reach. The <code>lowered</code> scenario in the menu
-mockup shows the old position for comparison. In Act mode the caption reads &quot;LEAVE&quot;.</li>
+<li><strong>ACT is not lifted</strong>: it stays where it is today, level with the mic, size unchanged (r 56). (An earlier draft
+raised it 72 px; Josh undid that after fix10.) In Act mode the caption reads &quot;LEAVE&quot;.</li>
 </ul>
 <h3 id="2b-input">2b. Input</h3>
 <ul>
@@ -408,34 +421,14 @@ line. Making it final would send the player back through ACT → aim → mic for
 <td>gated on the first audio frame + socket config, never a timer</td>
 </tr>
 <tr>
-<td>arming → &quot;mic not ready&quot;</td>
-<td>2500</td>
-<td>timer; amber, persists</td>
+<td>final → line in the feed</td>
+<td>0</td>
+<td>the line fades in over 250 ms; nothing else on screen</td>
 </tr>
 <tr>
-<td>mic up → take card rises</td>
-<td>0–220</td>
-<td>ease-out-back; dashed; partial words</td>
-</tr>
-<tr>
-<td>take card final → ✓ badge</td>
-<td>0–300</td>
-<td>ease-out-back; tick 990→1480 Hz</td>
-</tr>
-<tr>
-<td>final → card lifts into feed</td>
-<td>420 → 680</td>
-<td>ease-in, shrink to 86 %</td>
-</tr>
-<tr>
-<td>nothing → idle</td>
-<td>1600</td>
-<td><code>?</code> beat over the <code>@</code> 1200</td>
-</tr>
-<tr>
-<td>warming_fail → idle</td>
-<td>2200</td>
-<td>or the next press</td>
+<td>nothing sent → mic shake</td>
+<td>240</td>
+<td>6 px horizontal, decaying; soft low tone</td>
 </tr>
 <tr>
 <td>ACT tap → menu open</td>
@@ -536,8 +529,9 @@ line. Making it final would send the player back through ACT → aim → mic for
 <hr>
 <h2 id="5-edge-cases">5. Edge cases</h2>
 <ul>
-<li><strong>Empty STT (talk).</strong> &quot;didn&#39;t catch that&quot; card, <code>?</code> over the <code>@</code>, caption; nothing is sent. Distinguished from
-system failure by whether the stream ever started (the audit&#39;s <code>streamStarted</code> test).</li>
+<li><strong>Empty STT (talk).</strong> Nothing is sent and nothing is written: the mic button gives a tiny shake. Distinguished
+from a system failure (which is retried from the buffered audio) by whether the stream ever started (the audit&#39;s
+<code>streamStarted</code> test).</li>
 <li><strong>Empty STT (slot).</strong> The slot says &quot;didn&#39;t catch that&quot; for 900 ms and closes; the selection and strip return.</li>
 <li><strong>Cancel mid-speech (slot).</strong> ✕ or stick-left while listening: the slot closes, the socket&#39;s take is
 discarded (the bridge still finalizes the socket to stop billing, but the text is dropped).</li>
@@ -553,9 +547,10 @@ it is performed so the joke is shared, not discovered.</li>
 open to the words as said, still gated if hostile. The marching border and the underline carry the wait. Nothing else on screen moves.</li>
 <li><strong>The sidecar is down.</strong> As said, &quot;as said&quot; tag, no gate unless hostile (then ✓ is required, and the sidecar&#39;s
 absence means it performs locally and queues the facts).</li>
-<li><strong>Two takes in a row (talk).</strong> A press while the previous card is lifting: the lift finishes, the new press arms.</li>
+<li><strong>Two takes in a row (talk).</strong> A press while the previous take is finalizing arms at once; the previous line still
+lands in the feed.</li>
 <li><strong>Scene switch mid-take.</strong> The bridge releases the mic and socket on scene switch (fix9 §15) and the state returns
-to idle; a card in flight is dropped.</li>
+to idle; a take still finalizing is dropped (nothing was on screen, nothing reaches the feed).</li>
 <li><strong>Knocked out.</strong> Act mode is unavailable (today&#39;s rule); the talk flow is unchanged.</li>
 <li><strong>Korean worlds.</strong> Every caption has a Korean string (<code>lang.rb</code>); slot text and labels are Korean from the sidecar;
 the churn uses Hangul-safe glyphs (<code>@#%&amp;*</code> are fine; no syllable scrambling).</li>
@@ -572,18 +567,17 @@ stop applied to the UI layer only; the map&#39;s ambient animation keeps running
 <li><strong>Ring and sparks.</strong> The game&#39;s <code>marks</code> system (glyph particles with <code>dx/dy/alpha</code>) draws both; the ring is the
 글자들 <code>addRing</code> <code>·</code> circle.</li>
 <li><strong>Flash.</strong> <code>@flash_at</code> exists; cap it at 14 % alpha for 2 frames.</li>
-<li><strong>Take card.</strong> One rounded-rect sprite (<code>card_r8</code>) and a label; it is the speech-card system with a mint accent and
-no name plate.</li>
+<li><strong>No take card</strong> (talking is invisible). The mic&#39;s nothing-sent shake is a 240 ms x-offset on the button.</li>
 <li><strong>Haptics.</strong> A hidden <code>&lt;input type=&quot;checkbox&quot; switch&gt;</code> in the page toggled on <code>pointerdown</code>/<code>pointerup</code> on the mic
 and on ✓; nothing on async results.</li>
 <li><strong>Sound.</strong> Synthesised like <code>tools/synth_fx.py</code>: tick (1800→600 Hz, 250 ms), arm (880 Hz, 40 ms), listen (1320 Hz),
-heard (990→1480 Hz), warm-fail (330 Hz triangle), reason (240 Hz square, 250 ms).</li>
+nothing sent (330 Hz triangle), reason (240 Hz square, 250 ms).</li>
 </ul>
 <hr>
 <h2 id="7-how-pc-differs-briefly">7. How PC differs (briefly)</h2>
 <ul>
-<li>The mic flow is identical with Space; the take card and arming states apply as they are (desktop browsers have
-their own first-press audio unlock).</li>
+<li>The mic flow is identical with Space; talking is invisible there too, and the arming ring applies as it is
+(desktop browsers have their own first-press audio unlock).</li>
 <li>The slot accepts <strong>typing</strong>: in Act mode, T or <code>/</code> opens the slot as a text field (the current dev path becomes
 the real one); Enter sends it to the same judge; the landing and gate are identical. This keeps one mental model
 for &quot;a new verb&quot; on both platforms.</li>
@@ -595,19 +589,19 @@ target with the existing pointer line.</li>
 <hr>
 <h2 id="8-how-each-choice-follows-from-the-philosophy">8. How each choice follows from the philosophy</h2>
 <ul>
-<li><strong>P1 The screenplay is the world.</strong> The slot shows the words that become the △ line; the take card shows the
-words that become the <code>ADVENTURER:</code> line. The player watches their input become script.</li>
+<li><strong>P1 The screenplay is the world.</strong> The slot shows the words that become the △ line; plain talk becomes the
+<code>ADVENTURER:</code> line in the feed, the only place it is written. The player reads their input as script.</li>
 <li><strong>P2 The author never plays the player / P10 nothing shown that was not performed.</strong> The feed line appears only
-after the take is final and lifted; the △ line only after the press.</li>
+after the take is final; the △ line only after the press.</li>
 <li><strong>P4 Speech is the main verb; menus are the bridge.</strong> No words while talking; the slot makes the menu the place
 where speech lands, not a replacement for it.</li>
 <li><strong>P5 Intent in, outcome out.</strong> The gate sits exactly on rewrites, doubt and harm; everything else performs at once.
 The gated &quot;do this instead?&quot; keeps the rewrite honest: the player watches their words morph into it before it is
 performed.</li>
-<li><strong>P7 Bigger things, bigger effects.</strong> A heard take is a tick; a landing is a press with sparks; a reason is red and
+<li><strong>P7 Bigger things, bigger effects.</strong> A heard take is just its line in the feed; a landing is a press with sparks; a reason is red and
 shakes; a join stays bigger than all of these.</li>
 <li><strong>P9 Timing is most of the feel.</strong> Every transition is under 320 ms except the ones that wait on the network, and
-those show progress (partials, typed words, the sweep) instead of a spinner.</li>
+those show progress (typed words, the sweep) instead of a spinner; plain talk shows nothing while it waits.</li>
 <li><strong>P11 Every model-facing word is reviewable.</strong> This proposal adds no model-facing text. The <code>gate</code> field is a
 derived flag from answers Jev already gives.</li>
 </ul>
@@ -618,8 +612,7 @@ derived flag from answers Jev already gives.</li>
 for every row, per Josh&#39;s ask; &quot;tap the row again&quot; makes the strip optional for fast players.)</li>
 <li>P ≥ 0.75 for the auto path is a guess from the inspire logs (ok at 0.83 was the misheard hit). It should be tuned
 on a week of live <code>ev: inspire</code> records.</li>
-<li>Should the take card show partial words at all in the Korean worlds, where Soniox&#39;s non-final tokens change more?
-(The mockup shows them; a setting could hide partials.)</li>
+<li>(Closed: talking is invisible after fix10, so there are no partial words on screen in any language.)</li>
 <li>Scene transitions as a bigger &quot;being in the scene&quot; beat (Josh&#39;s 18:09 note to Base Models): not in this proposal.</li>
 </ol>
 
@@ -627,11 +620,11 @@ on a week of live <code>ev: inspire</code> records.</li>
 <h2 id="clips">Clips</h2>
 <p>Recorded from the mockups (portrait, 780×1688). A = talk, B = menu, C = mic to action. Tap to play.</p>
 <div class="clips">
-  <div class="clip"><video src="media/a-talk-ok.mp4" controls muted playsinline loop preload="metadata"></video><b>A1</b> <code>a-talk-ok.mp4</code><small><b>What to watch:</b> Talk, colour: the grey arming ring, then the green mic and five green bars over the @; on release the dashed take card fills with partial words, turns solid with a ✓ on the mic, and lifts into the feed.</small></div>
-  <div class="clip"><video src="media/a-talk-ok-ascii.mp4" controls muted playsinline loop preload="metadata"></video><b>A2</b> <code>a-talk-ok-ascii.mp4</code><small><b>What to watch:</b> The same take in the ASCII skin: the level bars as glyph columns over the @, the take card and the lift into the feed.</small></div>
-  <div class="clip"><video src="media/a-talk-slow.mp4" controls muted playsinline loop preload="metadata"></video><b>A3</b> <code>a-talk-slow.mp4</code><small><b>What to watch:</b> A 2.3 s finalize: the partial words keep forming in the dashed card, so the wait reads as progress, not a spinner.</small></div>
-  <div class="clip"><video src="media/a-talk-empty-and-notready.mp4" controls muted playsinline loop preload="metadata"></video><b>A4</b> <code>a-talk-empty-and-notready.mp4</code><small><b>What to watch:</b> Two failure looks: an empty take (grey "didn't catch that" plus the ? over the @), then a release while still arming (amber "let go · hold again", no finalize).</small></div>
-  <div class="clip"><video src="media/b-menu-select-confirm.mp4" controls muted playsinline loop preload="metadata"></video><b>B1</b> <code>b-menu-select-confirm.mp4</code><small><b>What to watch:</b> The stick moves the selection up and down only; the ✕/✓ strip opens under the selected row; ✓ gives the commit beat (white wash, hitstop, glyph ring, sparks) before the menu leaves.</small></div>
+  <div class="clip"><video src="media/a-talk-ok.mp4" controls muted playsinline loop preload="metadata"></video><b>A1</b> <code>a-talk-ok.mp4</code><small><b>What to watch:</b> Invisible talk, colour: the mic arms (a dashed ring on the button only), then the green mic and five green bars over the @. On release nothing appears on the game screen (no card, pill, bubble or ✓) and the line shows up only in the feed, then the room answers.</small></div>
+  <div class="clip"><video src="media/a-talk-ok-ascii.mp4" controls muted playsinline loop preload="metadata"></video><b>A2</b> <code>a-talk-ok-ascii.mp4</code><small><b>What to watch:</b> The same take in the ASCII skin: glyph-column level bars over the @ while talking, then the line only in the feed.</small></div>
+  <div class="clip"><video src="media/a-talk-slow.mp4" controls muted playsinline loop preload="metadata"></video><b>A3</b> <code>a-talk-slow.mp4</code><small><b>What to watch:</b> A 2.3 s finalize with nothing on screen while it waits: no partial words, no spinner. The line lands in the feed and the responder's "…" follows.</small></div>
+  <div class="clip"><video src="media/a-talk-empty-and-notready.mp4" controls muted playsinline loop preload="metadata"></video><b>A4</b> <code>a-talk-empty-and-notready.mp4</code><small><b>What to watch:</b> Nothing sent, twice: an empty take, then a release while still arming. Each time the mic button gives one tiny shake with no text and no ? over the @; the retry then talks normally and the line goes into the feed.</small></div>
+  <div class="clip"><video src="media/b-menu-select-confirm.mp4" controls muted playsinline loop preload="metadata"></video><b>B1</b> <code>b-menu-select-confirm.mp4</code><small><b>What to watch:</b> The stick moves the selection up and down only; the ✕/✓ strip opens under the selected row; ✓ gives the commit beat (white wash, hitstop, glyph ring, sparks) before the menu leaves. ACT is not lifted.</small></div>
   <div class="clip"><video src="media/b-menu-cancel-then-confirm.mp4" controls muted playsinline loop preload="metadata"></video><b>B2</b> <code>b-menu-cancel-then-confirm.mp4</code><small><b>What to watch:</b> ✕ closes the menu and leaves Act mode; the menu is reopened and a pick is confirmed with ✓.</small></div>
   <div class="clip"><video src="media/c-slot-ok-auto.mp4" controls muted playsinline loop preload="metadata"></video><b>C1</b> <code>c-slot-ok-auto.mp4</code><small><b>What to watch:</b> Mic in the menu: a slot slides open at the very bottom of the menu and the selection jumps to it (no beam from the mic), the slot flashes once as "tap her on the shoulder" types in, the words morph straight into "Tap shoulder", and it is pressed by itself (no gate). It becomes a row with a violet dot while the menu stays.</small></div>
   <div class="clip"><video src="media/c-slot-ok-ascii.mp4" controls muted playsinline loop preload="metadata"></video><b>C2</b> <code>c-slot-ok-ascii.mp4</code><small><b>What to watch:</b> The same spoken action in the ASCII skin: the bottom slot, the one-shot flash, the morph and auto-press, with no beam.</small></div>

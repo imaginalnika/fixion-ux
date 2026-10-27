@@ -23,6 +23,19 @@ just being in the scene".
 
 ### Changelog
 
+- **21:52 JST, Josh after fix10 (relayed by Base Models, approved "yeah"), and his follow-up "what i say shouldn't be
+  on screen, it should only go in feed":** plain talking is **invisible** again. When the player talks (not an
+  action), the line just goes into the feed. There is no live transcript, no take card or pill, no speech bubble or
+  caption over the player, no floating text and no stage labels (listening / heard / sent, "MIC WARMING",
+  "didn't catch that", "let go · hold again"). The ✓ badge and the finalizing dots on the mic are gone too. ACT is
+  **not lifted**: the 72 px raise is undone in the talk, menu and slot mockups and here. Josh's earlier wish for
+  confirmation was about **lost speech**, not visible feedback; it is now an engineering guarantee in the bridge
+  (§1c), not a screen element. Kept: the green speaking indicator over the `@` (Josh asked for it), the mic button's
+  own press state, a dashed arming ring on the button, a tiny button shake when nothing was sent, and "MIC BLOCKED"
+  on the button for a denied permission (the one state the player must fix). The action-menu flow is unchanged:
+  the slot opens at the bottom, words type into the slot, no beam, the slot flashes, the words morph into the label,
+  and it presses or waits for ✓. Changed: §0 rows 1–4 and 7, §1 (all), §2a, §4, §5, §6, §7, §8, §9 Q3, the talk
+  and menu mockups, and every clip (the A clips for talk; B and C for ACT's position).
 - **21:38 JST, Josh:** "i also don't want the 'line' or 'beam' from action mic to slot." The mic-to-slot ray is
   **removed** everywhere: no beam, no thread, no glyph motes between the mic and the slot. Everything else in the slot
   flow stays: it opens at the very bottom, the words type in, morph into the label, and press (or wait for ✓). So the
@@ -48,13 +61,13 @@ just being in the scene".
 
 | # | Decision | From which principle |
 |---|---|---|
-| 1 | While talking: no words on screen, a green mic, and five green level bars over the `@` in both skins. | P4 speech is the main verb; Josh's capture rule |
-| 2 | On release: a **take card** rises from the mic with the partial words at once (dashed), solidifies when final, ticks on the mic, then lifts into the feed as the player's line. | P10 nothing kept that was not seen; Q1 "yes, show" |
-| 3 | A press never lights green until audio is flowing. Before that the mic is **arming** (grey dashed ring). Releasing while arming never finalizes; it says "let go · hold again". | F3 (the iOS first-press race); orb-ui's "connecting" rule |
-| 4 | Four failure kinds, four different looks: *arming* (grey), *didn't catch that* (grey, a `?` beat over the `@`), *mic not ready* (amber, persists, tap to retry), *microphone blocked* (amber, says where to fix it). | research §1 Meta's error types |
+| 1 | While talking: no words on screen, a green mic, and five green level bars over the `@` in both skins. What the player says is **never on screen**; it only goes into the feed. | P4 speech is the main verb; Josh's capture rule |
+| 2 | On release: **nothing on screen**. No take card, pill, transcript or stage label; the line just appears in the feed as `ADVENTURER: …`. | Josh after fix10 (talking is invisible) |
+| 3 | A press never lights green until audio is flowing. Before that the mic is **arming** (grey dashed ring). Releasing while arming never finalizes; the mic button gives a tiny shake, no text. | F3 (the iOS first-press race); orb-ui's "connecting" rule |
+| 4 | Failures stay on the mic button: *arming* (grey dashed ring), *nothing sent* (a tiny shake), *blocked* (greyed with "MIC BLOCKED", the one persistent state). Socket errors are retried, not shown. Lost speech is prevented in the bridge, not signalled on screen. | Josh after fix10; research §1 |
 | 5 | In Act mode the left stick moves the selection **up and down only**. Left and right do nothing. | F6 mixed semantics |
 | 6 | The ✕ (red) ✓ (green) pair appears in its own strip **under the selected row**, rows below move down with it (160 ms). ✓ commits; tapping the selected row again also commits; ACT leaves. | Josh's ask; HIG symbols; Xbox A/B colours |
-| 7 | ACT is raised 72 px above the mic's centre line, permanently (the caption moves under it). | F7; Hoober's lower-middle band |
+| 7 | ACT stays where it is, level with the mic (**not lifted**; the 72 px raise is undone). | Josh after fix10 |
 | 8 | The commit is a moment: press state (white wash 80 ms), hitstop 90 ms, a glyph ring, sparks, a 1800→600 Hz tick; the menu stays 400 ms, then leaves in 200 ms. | P9 timing; 글자들 `contact()` |
 | 9 | Pressing the mic in the menu slides a **slot** open at the **very bottom of the menu**, below every row, and the selection jumps to it (220 ms); while speaking the slot's dashed border marches (no beam from the mic); on release the slot flashes once and the heard words type in (≤400 ms); the judge runs under a sweeping underline. | Josh's ask; P1 the screenplay is the world |
 | 10 | The judged label **lands in the slot**: the heard words **morph straight into the label** (320 ms glyph churn, rewrite or not); nothing of the original is kept. The slot is pressed (same moment as 8), performed, and becomes an ordinary row with a violet dot, staying at the bottom of the menu; the menu stays 1.1 s. | F4; P5 intent in, outcome out |
@@ -68,77 +81,68 @@ just being in the scene".
 
 ## 1. The talk flow
 
+Plain talking is **invisible** (Josh, after fix10; see the changelog). What the player says is never drawn on the game
+screen: no live transcript, no take card or pill, no speech bubble or caption over the `@`, no floating text, no
+stage labels. The words appear in exactly one place, as the `ADVENTURER: …` line in the feed. The only talk feedback
+is the green indicator over the `@` while audio flows, and the mic button's own press state.
+
 ### 1a. States
 
 ```mermaid
 stateDiagram-v2
   [*] --> idle
-  idle --> arming: mic down (haptic)
+  idle --> arming: mic down (haptic; dashed ring on the mic button only)
   arming --> listening: audio flowing (AudioContext running, mic track live, socket configured)
-  arming --> warming_fail: mic up before audio flowed
-  arming --> sys_fail: getUserMedia denied / socket error / 2.5 s without audio
-  listening --> finalizing: mic up (haptic)
-  finalizing --> heard: final text, non-empty
-  finalizing --> nothing: final text empty
-  finalizing --> sys_fail: socket closed / 5 s cap with nothing
-  heard --> sent: take card lifts into the feed (ADVENTURER: …)
+  arming --> idle: mic up before audio flowed (nothing sent; the mic gives a tiny shake)
+  arming --> blocked: getUserMedia denied
+  listening --> finalizing: mic up (haptic; nothing on screen)
+  finalizing --> sent: final text, non-empty (the line appears in the feed, ADVENTURER: …)
+  finalizing --> idle: final text empty (nothing sent; the mic gives a tiny shake)
+  finalizing --> idle: socket closed / 5 s cap (the take is retried from the buffered audio, see 1c)
   sent --> idle: the room answers after the 0.9 s floor
-  nothing --> idle: 1.6 s
-  warming_fail --> idle: 2.2 s (or the next press)
-  sys_fail --> arming: mic down again (tap to retry)
+  blocked --> arming: mic down after the permission is granted
 ```
 
 ### 1b. What the player sees, state by state
 
-**idle.** The mic as today: mint ring, "HOLD TO TALK".
+**idle.** The mic as today: mint ring, the fixed button label "HOLD TO TALK".
 
-**arming (mic down).** The ring turns grey and dashed and rotates; over the `@` a faint grey five-bar stub and a
-small "…". Caption "MIC WARMING". This is the state the current build does not have, and it is where the thirteen
-empty takes in the audit happened (F3). The green must not come on until the browser reports an audio frame to the
-worklet and the Soniox socket has taken its config message. Typical arming is 60–150 ms on a warm page and is barely
-seen; on a cold iOS page it is 300–2,000 ms and the player must see that something is being set up.
+**arming (mic down).** On the mic button only: the ring turns grey and dashed and rotates, the button is pressed
+in. Nothing over the `@`, no caption. The green must not come on until the browser reports an audio frame to the
+worklet and the Soniox socket has taken its config message (typical 60–150 ms on a warm page, 300–2,000 ms on a cold
+iOS page).
 
 **listening.** The mic turns green with the three pulse rings scaled by level, as today. Over the `@`: five green
 bars (4 px wide, 4 px apart, 4–24 px tall by level, with the per-bar phase from the web build's `drawVoice`), an
 additive green glow behind them in the colour skin, `|`/`:`/`.` glyph columns in the ASCII skin. No words. This is
-the indicator Josh asked back for (18:09), in both skins.
+the indicator Josh asked back for (18:09), in both skins, and it stays.
 
-**finalizing (mic up).** The mic shows the eight orbiting dots as today, but now the **take card** rises at once
-(220 ms, ease-out-back) from the top of the mic with whatever has been heard so far, in a dashed mint box with an
-ellipsis: Soniox's non-final tokens, which the bridge currently throws away. The card updates as tokens arrive.
-Median release-to-final is 2.3 s in the logs (F2); during that time the player reads their own words forming.
+**finalizing (mic up).** The bars go, the mic returns to idle. Nothing else on screen: no card, no partial words, no
+dots. Median release-to-final is 2.3 s in the logs (F2); the "…" over the predicted responder is the next thing seen.
 
-**heard.** The card solidifies: solid border, bold text, a ✓ badge pops on the mic's shoulder (300 ms ease-out-back)
-with a rising two-tone tick. 420 ms later the card **lifts** (260 ms, ease-in, shrinking to 86 %) into the feed and
-becomes the line `ADVENTURER: …` in the player's mint, which the fix9 "Show my lines = Yes" default already draws.
-The "…" over the predicted responder appears as today and the floor runs.
+**sent.** The line `ADVENTURER: …` appears in the feed in the player's mint (the fix9 "Show my lines = Yes" default
+already draws it). That is the only place the player's words are ever shown. The "…" over the predicted responder
+appears as today and the floor runs.
 
-**nothing (empty final, the stream had started).** The card says "didn't catch that" in grey, a `?` drifts up from
-the `@` for 1.2 s (the existing beat, kept), the mic caption reads "DIDN'T CATCH THAT" for 1.6 s. This is a
-character beat (Pikachu's "Pika?"), because the system did its job and heard silence.
+**Nothing sent (empty final, or released while arming).** The mic button gives one tiny horizontal shake (240 ms)
+and a soft low tone. No text, no `?` over the `@`, nothing in the feed.
 
-**warming_fail (released while arming).** The card is amber: "mic was still warming — hold again". Caption "LET GO ·
-HOLD AGAIN". Engineering rule behind it: the bridge must not send silence + `finalize` to a socket that never got its
-config, and must not open a second socket; the pre-opened one is kept for the next press. The next press on a warm
-page then arms in ~100 ms and the player is talking.
+**blocked (permission denied).** The one persistent state, because the player has to act on it: the mic button
+greys out with an amber slash and its label reads "MIC BLOCKED" until the permission is granted. Socket errors are
+not shown; they are retried (1c).
 
-**sys_fail (denied, socket error, nothing after 2.5 s of arming, or a 5 s cap with no final).** The card is
-amber and persists until the next press: "mic not ready · tap to retry", or "microphone blocked · allow it in
-Settings" for a permission denial. Caption "MIC NOT READY · TAP TO RETRY". The sidecar gets the client-side reason
-(fix9 §15). This is a system status and must look like one, not like a character beat.
+### 1c. Why invisible, and what "confirmation" means now
 
-### 1c. Why this and not a transcript while talking
-
-Josh's rule is about capture: while you hold the button, only the green signal. The take card is understanding
-feedback after you let go: the words are shown exactly once, in the moment you are already looking at the mic, and
-then they become the committed line in the feed, which Josh now wants shown by default. The partial words appear
-*before* the final so the 2 s wait reads as progress, not as a spinner. No new permanent text on the screen.
+Josh's earlier wish for confirmation was about **lost speech**, not visible feedback: speech that was said must not
+silently vanish. That is an engineering guarantee, not a screen element. The bridge buffers audio from the moment of
+mic down (so the arming window does not eat the first words), never sends `finalize` to a socket that did not get its
+config, keeps the pre-opened socket for the next press, and retries a take whose socket closed from the buffered
+audio. When it works, the proof is the line in the feed and the room answering. The screen stays clean.
 
 ### 1d. Barge-in while talking
 
-Pressing the mic during a performance cancels it as today. The take card does not change that. If a card from the
-previous take is still lifting when the next press comes, it finishes its lift (260 ms) and the new press starts
-arming; nothing is dropped.
+Pressing the mic during a performance cancels it as today. A press while the previous take is still finalizing
+starts arming at once; the previous take still lands in the feed when its final arrives; nothing is dropped.
 
 ---
 
@@ -152,10 +156,8 @@ arming; nothing is dropped.
   rejected: it hides which target you are on and turns the map into a background.
 - Rows 46 px, 22 px type, the selected row mint with the `›` as today; `»` marks walk-up verbs; item rows keep
   their icons.
-- **ACT is raised 72 px** (centre at the mic's centre minus 72 in DR's y-up coordinates), its caption moves under
-  it, size unchanged (r 56). The lower-middle band is where a two-thumb grip on a portrait phone actually rests
-  (Hoober); the very bottom was chosen for symmetry with the mic, not reach. The `lowered` scenario in the menu
-  mockup shows the old position for comparison. In Act mode the caption reads "LEAVE".
+- **ACT is not lifted**: it stays where it is today, level with the mic, size unchanged (r 56). (An earlier draft
+  raised it 72 px; Josh undid that after fix10.) In Act mode the caption reads "LEAVE".
 
 ### 2b. Input
 
@@ -280,12 +282,8 @@ line. Making it final would send the player back through ACT → aim → mic for
 |---|---|---|
 | mic down → arming ring visible | 0 | immediate; haptic (switch trick) |
 | arming → listening (warm page) | 60–150 | gated on the first audio frame + socket config, never a timer |
-| arming → "mic not ready" | 2500 | timer; amber, persists |
-| mic up → take card rises | 0–220 | ease-out-back; dashed; partial words |
-| take card final → ✓ badge | 0–300 | ease-out-back; tick 990→1480 Hz |
-| final → card lifts into feed | 420 → 680 | ease-in, shrink to 86 % |
-| nothing → idle | 1600 | `?` beat over the `@` 1200 |
-| warming_fail → idle | 2200 | or the next press |
+| final → line in the feed | 0 | the line fades in over 250 ms; nothing else on screen |
+| nothing sent → mic shake | 240 | 6 px horizontal, decaying; soft low tone |
 | ACT tap → menu open | 180 | ease-out, 10 px rise |
 | selection settles → ✕/✓ strip | 120 + 160 | strip ease-out; rows below in sync |
 | stick repeat | 500 then 200 | threshold crossing, hysteresis 16/10 px |
@@ -310,8 +308,9 @@ line. Making it final would send the player back through ACT → aim → mic for
 
 ## 5. Edge cases
 
-- **Empty STT (talk).** "didn't catch that" card, `?` over the `@`, caption; nothing is sent. Distinguished from
-  system failure by whether the stream ever started (the audit's `streamStarted` test).
+- **Empty STT (talk).** Nothing is sent and nothing is written: the mic button gives a tiny shake. Distinguished
+  from a system failure (which is retried from the buffered audio) by whether the stream ever started (the audit's
+  `streamStarted` test).
 - **Empty STT (slot).** The slot says "didn't catch that" for 900 ms and closes; the selection and strip return.
 - **Cancel mid-speech (slot).** ✕ or stick-left while listening: the slot closes, the socket's take is
   discarded (the bridge still finalizes the socket to stop billing, but the text is dropped).
@@ -327,9 +326,10 @@ line. Making it final would send the player back through ACT → aim → mic for
   open to the words as said, still gated if hostile. The marching border and the underline carry the wait. Nothing else on screen moves.
 - **The sidecar is down.** As said, "as said" tag, no gate unless hostile (then ✓ is required, and the sidecar's
   absence means it performs locally and queues the facts).
-- **Two takes in a row (talk).** A press while the previous card is lifting: the lift finishes, the new press arms.
+- **Two takes in a row (talk).** A press while the previous take is finalizing arms at once; the previous line still
+  lands in the feed.
 - **Scene switch mid-take.** The bridge releases the mic and socket on scene switch (fix9 §15) and the state returns
-  to idle; a card in flight is dropped.
+  to idle; a take still finalizing is dropped (nothing was on screen, nothing reaches the feed).
 - **Knocked out.** Act mode is unavailable (today's rule); the talk flow is unchanged.
 - **Korean worlds.** Every caption has a Korean string (`lang.rb`); slot text and labels are Korean from the sidecar;
   the churn uses Hangul-safe glyphs (`@#%&*` are fine; no syllable scrambling).
@@ -347,19 +347,18 @@ line. Making it final would send the player back through ACT → aim → mic for
 - **Ring and sparks.** The game's `marks` system (glyph particles with `dx/dy/alpha`) draws both; the ring is the
   글자들 `addRing` `·` circle.
 - **Flash.** `@flash_at` exists; cap it at 14 % alpha for 2 frames.
-- **Take card.** One rounded-rect sprite (`card_r8`) and a label; it is the speech-card system with a mint accent and
-  no name plate.
+- **No take card** (talking is invisible). The mic's nothing-sent shake is a 240 ms x-offset on the button.
 - **Haptics.** A hidden `<input type="checkbox" switch>` in the page toggled on `pointerdown`/`pointerup` on the mic
   and on ✓; nothing on async results.
 - **Sound.** Synthesised like `tools/synth_fx.py`: tick (1800→600 Hz, 250 ms), arm (880 Hz, 40 ms), listen (1320 Hz),
-  heard (990→1480 Hz), warm-fail (330 Hz triangle), reason (240 Hz square, 250 ms).
+  nothing sent (330 Hz triangle), reason (240 Hz square, 250 ms).
 
 ---
 
 ## 7. How PC differs (briefly)
 
-- The mic flow is identical with Space; the take card and arming states apply as they are (desktop browsers have
-  their own first-press audio unlock).
+- The mic flow is identical with Space; talking is invisible there too, and the arming ring applies as it is
+  (desktop browsers have their own first-press audio unlock).
 - The slot accepts **typing**: in Act mode, T or `/` opens the slot as a text field (the current dev path becomes
   the real one); Enter sends it to the same judge; the landing and gate are identical. This keeps one mental model
   for "a new verb" on both platforms.
@@ -372,19 +371,19 @@ line. Making it final would send the player back through ACT → aim → mic for
 
 ## 8. How each choice follows from the philosophy
 
-- **P1 The screenplay is the world.** The slot shows the words that become the △ line; the take card shows the
-  words that become the `ADVENTURER:` line. The player watches their input become script.
+- **P1 The screenplay is the world.** The slot shows the words that become the △ line; plain talk becomes the
+  `ADVENTURER:` line in the feed, the only place it is written. The player reads their input as script.
 - **P2 The author never plays the player / P10 nothing shown that was not performed.** The feed line appears only
-  after the take is final and lifted; the △ line only after the press.
+  after the take is final; the △ line only after the press.
 - **P4 Speech is the main verb; menus are the bridge.** No words while talking; the slot makes the menu the place
   where speech lands, not a replacement for it.
 - **P5 Intent in, outcome out.** The gate sits exactly on rewrites, doubt and harm; everything else performs at once.
   The gated "do this instead?" keeps the rewrite honest: the player watches their words morph into it before it is
   performed.
-- **P7 Bigger things, bigger effects.** A heard take is a tick; a landing is a press with sparks; a reason is red and
+- **P7 Bigger things, bigger effects.** A heard take is just its line in the feed; a landing is a press with sparks; a reason is red and
   shakes; a join stays bigger than all of these.
 - **P9 Timing is most of the feel.** Every transition is under 320 ms except the ones that wait on the network, and
-  those show progress (partials, typed words, the sweep) instead of a spinner.
+  those show progress (typed words, the sweep) instead of a spinner; plain talk shows nothing while it waits.
 - **P11 Every model-facing word is reviewable.** This proposal adds no model-facing text. The `gate` field is a
   derived flag from answers Jev already gives.
 
@@ -396,6 +395,5 @@ line. Making it final would send the player back through ACT → aim → mic for
    for every row, per Josh's ask; "tap the row again" makes the strip optional for fast players.)
 2. P ≥ 0.75 for the auto path is a guess from the inspire logs (ok at 0.83 was the misheard hit). It should be tuned
    on a week of live `ev: inspire` records.
-3. Should the take card show partial words at all in the Korean worlds, where Soniox's non-final tokens change more?
-   (The mockup shows them; a setting could hide partials.)
+3. (Closed: talking is invisible after fix10, so there are no partial words on screen in any language.)
 4. Scene transitions as a bigger "being in the scene" beat (Josh's 18:09 note to Base Models): not in this proposal.

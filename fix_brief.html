@@ -50,13 +50,23 @@
   .clip video { width: 100%; border-radius: 6px; background: #000; display: block; }
   .clip b { color: #6fe2c7; } .clip small { color: #a8b4ba; display: block; margin-top: 4px; line-height: 1.45; }
   .clip code { font-size: 11px; }
+  .clips { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+  .clip { background: #111820; border: 1px solid #1e2a30; border-radius: 10px; padding: 8px; }
+  .clip video { width: 100%; border-radius: 6px; background: #000; display: block; }
+  .clip b { color: #6fe2c7; } .clip small { color: #a8b4ba; display: block; margin-top: 4px; line-height: 1.45; }
+  .clip code { font-size: 11px; }
+  .clips { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+  .clip { background: #111820; border: 1px solid #1e2a30; border-radius: 10px; padding: 8px; }
+  .clip video { width: 100%; border-radius: 6px; background: #000; display: block; }
+  .clip b { color: #6fe2c7; } .clip small { color: #a8b4ba; display: block; margin-top: 4px; line-height: 1.45; }
+  .clip code { font-size: 11px; }
 </style>
 </head>
 <body>
 <main>
   <nav class="mock">
-    <a href="mock/talk.html"><b>Mockup A · talk flow</b>green bars over the @, the take card, failures</a>
-    <a href="mock/menu.html"><b>Mockup B · action menu</b>stick up/down, ✕/✓ strip, raised ACT, the commit</a>
+    <a href="mock/talk.html"><b>Mockup A · talk flow</b>invisible talk: green bars over the @, the line only in the feed</a>
+    <a href="mock/menu.html"><b>Mockup B · action menu</b>stick up/down, ✕/✓ strip, ACT not lifted, the commit</a>
     <a href="mock/slot.html"><b>Mockup C · mic to action</b>the bottom slot, the morph, the gate (no beam)</a>
     <a href="index.html#clips"><b>Clips</b>14 recorded runs of the mockups, A1–C8</a>
     <a href="index.html"><b>The proposal</b>back to proposal.md, rendered</a>
@@ -70,6 +80,9 @@ brief. Line numbers are from 18:25 and will drift; function names are the anchor
 is what the proposal (<code>proposal.md</code>) changes or adds, ordered by impact, each mapped to files and functions, with
 what to verify on a phone. Section C is the phone verification script. Where the proposal and fix10&#39;s own brief
 disagree, the disagreement is stated and the recommendation is marked; Josh decides.</p>
+<p><strong>Update 21:52 JST (Josh, after fix10):</strong> plain talking is <strong>invisible</strong>. What the player says is never on screen;
+it only goes into the feed. There is no speech pill, live card, partial words, bubble over the <code>@</code> or stage label.
+ACT is <strong>not lifted</strong>. B5 and the new B11 below carry the changes; the action-slot items (B1–B3, B10) are unchanged.</p>
 <hr>
 <h2 id="a-already-in-the-fix10-tree-1825-jst-per-file">A. Already in the fix10 tree (18:25 JST), per file</h2>
 <table>
@@ -83,7 +96,7 @@ disagree, the disagreement is stated and the recommendation is marked; Josh deci
 <tbody><tr>
 <td>Live partials from Soniox</td>
 <td><code>web/drdr-bridge.js</code> <code>livePartial</code>, <code>c.live</code>; <code>player.rb</code> <code>absorb_bridge</code> (<code>data[&#39;partial&#39;]</code>)</td>
-<td>non-final tokens reach the game ≤10×/s as <code>partial</code></td>
+<td>non-final tokens reach the game ≤10×/s as <code>partial</code> (<strong>no longer drawn</strong>: talking is invisible, B5)</td>
 </tr>
 <tr>
 <td>Arming state</td>
@@ -98,7 +111,7 @@ disagree, the disagreement is stated and the recommendation is marked; Josh deci
 <tr>
 <td>Speech pill (the proposal&#39;s take card)</td>
 <td><code>player.rb</code> <code>@talk_ui</code> phases <code>:listening :sending :sent :failed</code>, <code>tick_confirm</code>; <code>action_ui.rb</code> <code>draw_speech10</code>, <code>draw_live_card</code>; <code>layout.rb</code> <code>@pill</code> (over the mic, left of ACT)</td>
-<td>the sent line &quot;flies&quot; into the feed (<code>director.rb</code> l.21 note)</td>
+<td>the sent line &quot;flies&quot; into the feed (<code>director.rb</code> l.21 note). <strong>To remove</strong> for plain talk (B5)</td>
 </tr>
 <tr>
 <td>Slot for a spoken action</td>
@@ -118,7 +131,7 @@ disagree, the disagreement is stated and the recommendation is marked; Josh deci
 <tr>
 <td>ACT raised</td>
 <td><code>layout.rb</code> l.58–62: ACT at <code>mic.y + 92</code>, the mic and pad moved down 36 px</td>
-<td>92 px, permanent</td>
+<td>92 px, permanent. <strong>To revert</strong>: ACT is not lifted (B11)</td>
 </tr>
 <tr>
 <td>Menu anchored low</td>
@@ -191,19 +204,41 @@ switch.</li>
 <li><strong>Where:</strong> <code>player.rb</code> <code>build_menu_rows</code> (the candidate sides and <code>keep_clear</code> scores), <code>layout.rb</code>
 <code>@menu_floor*</code>.</li>
 </ul>
-<h3 id="b5-the-take-card-rises-from-the-mic-and-lifts-into-the-feed-small-deltas-to-the-pill">B5. The take card rises from the mic and lifts into the feed (small deltas to the pill)</h3>
+<h3 id="b5-plain-talking-is-invisible-no-pill-no-live-card-no-words-on-screen-josh-after-fix10">B5. Plain talking is invisible: no pill, no live card, no words on screen (Josh, after fix10)</h3>
 <ul>
-<li><strong>Now:</strong> <code>draw_speech10</code> / <code>@pill</code> is a strip over the mic, left of ACT, and the sent line &quot;flies&quot; into the feed.</li>
-<li><strong>Proposal:</strong> keep it. Three details: show the partial words in a <strong>dashed</strong> box and the final in a <strong>solid bold</strong>
-one (the player must be able to tell &quot;still forming&quot; from &quot;this is it&quot;); pop a ✓ badge on the mic&#39;s shoulder for
-300 ms at the final (the eye is on the thumb); lift the card into the feed only after 420 ms so the final can be
-read. Failure kinds keep their own looks: grey for <em>didn&#39;t catch that</em> (plus the existing <code>?</code> over the <code>@</code>), amber
-for <em>mic not ready</em> / <em>blocked</em> (persisting until the next press).</li>
-<li><strong>Where:</strong> <code>action_ui.rb</code> <code>draw_speech10</code>, <code>draw_live_card</code>; <code>player.rb</code> <code>@talk_ui</code> phases; <code>skin_color.rb</code> /
-<code>skin_ascii.rb</code> <code>draw_mic</code> (the badge).</li>
-<li><strong>Verify:</strong> on a cold page the first press shows the grey dashed ring and &quot;MIC WARMING&quot;; an early release says
-&quot;let go · hold again&quot; and the next press works; a normal take shows dashed words, then bold words, then the
-line in the feed.</li>
+<li><strong>Josh:</strong> plain talking is invisible again, and &quot;what i say shouldn&#39;t be on screen, it should only go in feed.&quot;
+His earlier wish for confirmation was about <strong>lost speech</strong>, not visible feedback.</li>
+<li><strong>Now:</strong> <code>draw_speech10</code> / <code>draw_live_card</code> / <code>@pill</code> draw a strip over the mic with live partials and stage
+labels (<code>:listening :sending :sent :failed</code>, <code>stt_msg</code> strings), and the sent line &quot;flies&quot; into the feed.</li>
+<li><strong>Proposal:</strong> for plain talk (not Act mode), draw <strong>none</strong> of it. No pill, no live card, no partial or final
+words, no bubble or caption over the <code>@</code>, no <code>?</code> beat, no flying line, no stage labels or failure captions, no ✓
+badge, and no finalizing dots on the mic. The final line is simply appended to the feed as <code>ADVENTURER: …</code>. The
+only talk feedback left:<ul>
+<li>the green bars over the <code>@</code> while audio flows (B7);</li>
+<li>the mic button&#39;s own press state, with a dashed ring on the button while <code>connecting</code>;</li>
+<li>a tiny button shake (≈240 ms) when nothing was sent (empty final or released while connecting);</li>
+<li>&quot;MIC BLOCKED&quot; on the button for a denied permission, the one persistent state.
+Lost speech is handled in the bridge instead:</li>
+<li>buffer audio from <code>pttDown</code> so the connecting window doesn&#39;t eat the first words;</li>
+<li>never <code>finalize</code> an unconfigured socket;</li>
+<li>retry a take whose socket closed from the buffer.
+<code>livePartial</code> can stay in the bridge for logs, but the game does not draw it. Leave the slot path alone: in Act
+mode the words still type into the slot (B10).</li>
+</ul>
+</li>
+<li><strong>Where:</strong><ul>
+<li><code>action_ui.rb</code> <code>draw_speech10</code>, <code>draw_live_card</code> (gate them off outside Act mode);</li>
+<li><code>player.rb</code> <code>@talk_ui</code> (keep the phases as state, drop their drawing) and ~l.305 (failure text → the button
+shake, or &quot;MIC BLOCKED&quot;);</li>
+<li><code>layout.rb</code> <code>@pill</code>;</li>
+<li><code>skin_color.rb</code> / <code>skin_ascii.rb</code> <code>draw_mic</code>;</li>
+<li><code>director.rb</code> (the line goes straight into the feed);</li>
+<li><code>drdr-bridge.js</code> <code>pttDown</code> (buffering), <code>TELL</code> / <code>notify</code> (no on-screen text for plain talk).</li>
+</ul>
+</li>
+<li><strong>Verify:</strong> hold the mic and talk. While holding, only the green bars and the green mic are visible. After
+release, nothing appears on the game screen until <code>ADVENTURER: …</code> is in the feed. Grep a screenshot sequence: the
+spoken words never appear outside the feed.</li>
 </ul>
 <h3 id="b6-the-commit-moment-one-shared-beat-for-menu-picks-and-slot-presses">B6. The commit moment: one shared beat for menu picks and slot presses</h3>
 <ul>
@@ -222,7 +257,8 @@ slot, so the new row is seen).</li>
 <ul>
 <li><strong>Now:</strong> fix10.md §9(a) asks for it in colour; the ASCII skin today only has the <code>?</code>.</li>
 <li><strong>Proposal:</strong> five bars (4 px wide, 4 px gap, 4–24 px by level, per-bar phase as the web build&#39;s <code>drawVoice</code>)
-with an additive glow in colour; <code>|</code> <code>:</code> <code>.</code> glyph columns in ASCII; a faint grey stub plus &quot;…&quot; while arming.</li>
+with an additive glow in colour; <code>|</code> <code>:</code> <code>.</code> glyph columns in ASCII; only while audio flows (nothing over the <code>@</code>
+while connecting, and no <code>?</code> beat after an empty take). Josh asked for this indicator; it stays.</li>
 <li><strong>Where:</strong> <code>skin_color.rb</code> <code>draw_talk_indicator</code> (l.1354), <code>skin_ascii.rb</code> <code>draw_talk_indicator</code> (l.1008);
 <code>pl.level</code> from the bridge.</li>
 </ul>
@@ -256,20 +292,28 @@ mic-to-slot ray is gone; see B1.)</li>
 selection jumps to it. Say &quot;fly over to her&quot;: the words morph into &quot;Attempt to fly&quot; with no grey line left. ✓:
 &quot;Attempt to fly&quot; is the last row.</li>
 </ul>
+<h3 id="b11-act-is-not-lifted-josh-after-fix10">B11. ACT is not lifted (Josh, after fix10)</h3>
+<ul>
+<li><strong>Now:</strong> <code>layout.rb</code> l.58–62 puts ACT at <code>mic.y + 92</code>, with the mic and pad moved down 36 px.</li>
+<li><strong>Proposal:</strong> revert that. ACT goes back to its pre-fix10 place (level with the mic in the mockup), and the mic and
+pad return to their pre-fix10 positions. The earlier proposal&#39;s 72 px raise is withdrawn too. Size unchanged.</li>
+<li><strong>Verify:</strong> ACT is back where it was before fix10, not above the mic; &quot;LEAVE&quot; in Act mode sits under it as before.</li>
+</ul>
 <hr>
 <h2 id="c-phone-verification-script-390844-dpr-2-colour-then-ascii">C. Phone verification script (390×844, DPR 2, colour then ASCII)</h2>
 <p>Use <code>tools/phone_test.py</code> with <code>--mic-wav</code> for real Soniox takes and <code>--init-js</code> for the slow-audio race
 (fix9 §16&#39;s init script). Capture each as a constant-res clip (<code>--screencast</code>).</p>
 <ol>
-<li><strong>Cold page, first press.</strong> Expect: grey dashed ring + &quot;MIC WARMING&quot; + grey stub over the <code>@</code>; no green until
-the console logs the socket config. Release early: &quot;let go · hold again&quot;; next press: green within ~150 ms.</li>
-<li><strong>Normal take.</strong> Expect: green mic + five bars over the <code>@</code> (both skins); on release a dashed card with partial
-words within 220 ms; bold card at the final; ✓ badge on the mic; the line in the feed after ~420 ms; &quot;…&quot; over the
+<li><strong>Cold page, first press.</strong> Expect: a grey dashed ring on the mic button only (no caption, nothing over the
+<code>@</code>); no green until the console logs the socket config. Release early: a tiny shake of the button, no text;
+the first words of the next press are not lost (buffered); next press: green within ~150 ms.</li>
+<li><strong>Normal take.</strong> Expect: green mic + five bars over the <code>@</code> (both skins), no words anywhere. On release: nothing
+on the game screen (no pill, card, bubble or ✓ badge); the line appears only in the feed; &quot;…&quot; over the
 responder; first NPC card ≥ 900 ms after release.</li>
-<li><strong>Empty take</strong> (<code>--mic-wav</code> silence, 1 s). Expect: grey &quot;didn&#39;t catch that&quot; card, <code>?</code> over the <code>@</code>, caption for
-1.6 s, nothing sent (<code>/api/say</code> not posted).</li>
-<li><strong>Denied mic</strong> (Playwright context without the permission). Expect: amber &quot;microphone blocked · allow it in
-Settings&quot;, persisting; no card over the <code>@</code>.</li>
+<li><strong>Empty take</strong> (<code>--mic-wav</code> silence, 1 s). Expect: a tiny shake of the mic button, no text, no <code>?</code> over the <code>@</code>,
+nothing sent (<code>/api/say</code> not posted).</li>
+<li><strong>Denied mic</strong> (Playwright context without the permission). Expect: the mic button greyed with &quot;MIC BLOCKED&quot;,
+persisting; nothing else on screen.</li>
 <li><strong>Menu: stick.</strong> Expect: up/down only; sideways does nothing; the strip opens under the selected row 120 ms after
 the stick settles and the rows below move with it; hold-repeat 500/200 ms; ✓ performs with the beat; tapping the
 selected row again performs; ✕ and ACT leave.</li>

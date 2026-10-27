@@ -9,20 +9,24 @@ is what the proposal (`proposal.md`) changes or adds, ordered by impact, each ma
 what to verify on a phone. Section C is the phone verification script. Where the proposal and fix10's own brief
 disagree, the disagreement is stated and the recommendation is marked; Josh decides.
 
+**Update 21:52 JST (Josh, after fix10):** plain talking is **invisible**. What the player says is never on screen;
+it only goes into the feed. There is no speech pill, live card, partial words, bubble over the `@` or stage label.
+ACT is **not lifted**. B5 and the new B11 below carry the changes; the action-slot items (B1–B3, B10) are unchanged.
+
 ---
 
 ## A. Already in the fix10 tree (18:25 JST), per file
 
 | Concern | Where | What fix10 does |
 |---|---|---|
-| Live partials from Soniox | `web/drdr-bridge.js` `livePartial`, `c.live`; `player.rb` `absorb_bridge` (`data['partial']`) | non-final tokens reach the game ≤10×/s as `partial` |
+| Live partials from Soniox | `web/drdr-bridge.js` `livePartial`, `c.live`; `player.rb` `absorb_bridge` (`data['partial']`) | non-final tokens reach the game ≤10×/s as `partial` (**no longer drawn**: talking is invisible, B5) |
 | Arming state | `drdr-bridge.js` `pttDown` sets `stt:'connecting'`, `'listening'` only after the socket took its config; `player.rb` `@stt_live` | the proposal's *arming* exists under the name `connecting` |
 | Failure reasons | `drdr-bridge.js` `TELL` map, `notify(key)` → `stt_msg`; `player.rb` ~l.305 shows them "in the failed pill (or slot)" | empty / blocked / reconnecting / failed, with `Lang` strings |
-| Speech pill (the proposal's take card) | `player.rb` `@talk_ui` phases `:listening :sending :sent :failed`, `tick_confirm`; `action_ui.rb` `draw_speech10`, `draw_live_card`; `layout.rb` `@pill` (over the mic, left of ACT) | the sent line "flies" into the feed (`director.rb` l.21 note) |
+| Speech pill (the proposal's take card) | `player.rb` `@talk_ui` phases `:listening :sending :sent :failed`, `tick_confirm`; `action_ui.rb` `draw_speech10`, `draw_live_card`; `layout.rb` `@pill` (over the mic, left of ACT) | the sent line "flies" into the feed (`director.rb` l.21 note). **To remove** for plain talk (B5) |
 | Slot for a spoken action | `player.rb` `@slot` phases `:listening :sending :judging :confirm :pressed :reason :said :failed :cancelled`, `inspire`, `inspired`, `pend`, `confirm_slot`, `cancel_slot`, `slot_height`; `action_ui.rb` `draw_slot10`, `slot_beams`, `press_fx` | slot opens under the selected row; standing additive rays in the slot while speaking; label churns in (`churn_text`); one beam sweeps the row on landing |
 | Confirm policy | `player.rb` `harmful?`, `pend` (`must = hostile || !judged || requires item`), `AUTO_PLAIN` = 90 ticks, `AUTO_REWRITTEN` | harmless-as-heard auto-confirms after 1.5 s; rewrites auto-confirm after `AUTO_REWRITTEN`; hostile / unjudged / item actions must be confirmed |
 | Up/down only, ✓/✕ | `player.rb` `menu_step` (`dir[0] == 0` only), `select_row`, `confirm_choice`; `action_ui.rb` `draw_strip10`, `button10`, `check_mark`, `cross_mark` | the strip under the selected row |
-| ACT raised | `layout.rb` l.58–62: ACT at `mic.y + 92`, the mic and pad moved down 36 px | 92 px, permanent |
+| ACT raised | `layout.rb` l.58–62: ACT at `mic.y + 92`, the mic and pad moved down 36 px | 92 px, permanent. **To revert**: ACT is not lifted (B11) |
 | Menu anchored low | `layout.rb` `@menu_floor`, `@menu_floor_right`; `player.rb` ~l.593 "anchored low, by the thumbs" | **the card no longer floats beside the target** (fix10.md §4 asked for this) |
 | Haptic | `drdr-bridge.js` `haptic()` (iOS switch trick) on press, release, ✓ | |
 | Green indicator over the player (colour skin) | fix10.md §9(a) | asked; check `skin_color.rb` `draw_talk_indicator` for the bars |
@@ -84,19 +88,37 @@ disagree, the disagreement is stated and the recommendation is marked; Josh deci
 - **Where:** `player.rb` `build_menu_rows` (the candidate sides and `keep_clear` scores), `layout.rb`
   `@menu_floor*`.
 
-### B5. The take card rises from the mic and lifts into the feed (small deltas to the pill)
+### B5. Plain talking is invisible: no pill, no live card, no words on screen (Josh, after fix10)
 
-- **Now:** `draw_speech10` / `@pill` is a strip over the mic, left of ACT, and the sent line "flies" into the feed.
-- **Proposal:** keep it. Three details: show the partial words in a **dashed** box and the final in a **solid bold**
-  one (the player must be able to tell "still forming" from "this is it"); pop a ✓ badge on the mic's shoulder for
-  300 ms at the final (the eye is on the thumb); lift the card into the feed only after 420 ms so the final can be
-  read. Failure kinds keep their own looks: grey for *didn't catch that* (plus the existing `?` over the `@`), amber
-  for *mic not ready* / *blocked* (persisting until the next press).
-- **Where:** `action_ui.rb` `draw_speech10`, `draw_live_card`; `player.rb` `@talk_ui` phases; `skin_color.rb` /
-  `skin_ascii.rb` `draw_mic` (the badge).
-- **Verify:** on a cold page the first press shows the grey dashed ring and "MIC WARMING"; an early release says
-  "let go · hold again" and the next press works; a normal take shows dashed words, then bold words, then the
-  line in the feed.
+- **Josh:** plain talking is invisible again, and "what i say shouldn't be on screen, it should only go in feed."
+  His earlier wish for confirmation was about **lost speech**, not visible feedback.
+- **Now:** `draw_speech10` / `draw_live_card` / `@pill` draw a strip over the mic with live partials and stage
+  labels (`:listening :sending :sent :failed`, `stt_msg` strings), and the sent line "flies" into the feed.
+- **Proposal:** for plain talk (not Act mode), draw **none** of it. No pill, no live card, no partial or final
+  words, no bubble or caption over the `@`, no `?` beat, no flying line, no stage labels or failure captions, no ✓
+  badge, and no finalizing dots on the mic. The final line is simply appended to the feed as `ADVENTURER: …`. The
+  only talk feedback left:
+  - the green bars over the `@` while audio flows (B7);
+  - the mic button's own press state, with a dashed ring on the button while `connecting`;
+  - a tiny button shake (≈240 ms) when nothing was sent (empty final or released while connecting);
+  - "MIC BLOCKED" on the button for a denied permission, the one persistent state.
+  Lost speech is handled in the bridge instead:
+  - buffer audio from `pttDown` so the connecting window doesn't eat the first words;
+  - never `finalize` an unconfigured socket;
+  - retry a take whose socket closed from the buffer.
+  `livePartial` can stay in the bridge for logs, but the game does not draw it. Leave the slot path alone: in Act
+  mode the words still type into the slot (B10).
+- **Where:**
+  - `action_ui.rb` `draw_speech10`, `draw_live_card` (gate them off outside Act mode);
+  - `player.rb` `@talk_ui` (keep the phases as state, drop their drawing) and ~l.305 (failure text → the button
+    shake, or "MIC BLOCKED");
+  - `layout.rb` `@pill`;
+  - `skin_color.rb` / `skin_ascii.rb` `draw_mic`;
+  - `director.rb` (the line goes straight into the feed);
+  - `drdr-bridge.js` `pttDown` (buffering), `TELL` / `notify` (no on-screen text for plain talk).
+- **Verify:** hold the mic and talk. While holding, only the green bars and the green mic are visible. After
+  release, nothing appears on the game screen until `ADVENTURER: …` is in the feed. Grep a screenshot sequence: the
+  spoken words never appear outside the feed.
 
 ### B6. The commit moment: one shared beat for menu picks and slot presses
 
@@ -115,7 +137,8 @@ disagree, the disagreement is stated and the recommendation is marked; Josh deci
 
 - **Now:** fix10.md §9(a) asks for it in colour; the ASCII skin today only has the `?`.
 - **Proposal:** five bars (4 px wide, 4 px gap, 4–24 px by level, per-bar phase as the web build's `drawVoice`)
-  with an additive glow in colour; `|` `:` `.` glyph columns in ASCII; a faint grey stub plus "…" while arming.
+  with an additive glow in colour; `|` `:` `.` glyph columns in ASCII; only while audio flows (nothing over the `@`
+  while connecting, and no `?` beat after an empty take). Josh asked for this indicator; it stays.
 - **Where:** `skin_color.rb` `draw_talk_indicator` (l.1354), `skin_ascii.rb` `draw_talk_indicator` (l.1008);
   `pl.level` from the bridge.
 
@@ -152,6 +175,13 @@ fine); menu stays 400 ms after a pick, 1100 ms after a slot press.
   selection jumps to it. Say "fly over to her": the words morph into "Attempt to fly" with no grey line left. ✓:
   "Attempt to fly" is the last row.
 
+### B11. ACT is not lifted (Josh, after fix10)
+
+- **Now:** `layout.rb` l.58–62 puts ACT at `mic.y + 92`, with the mic and pad moved down 36 px.
+- **Proposal:** revert that. ACT goes back to its pre-fix10 place (level with the mic in the mockup), and the mic and
+  pad return to their pre-fix10 positions. The earlier proposal's 72 px raise is withdrawn too. Size unchanged.
+- **Verify:** ACT is back where it was before fix10, not above the mic; "LEAVE" in Act mode sits under it as before.
+
 ---
 
 ## C. Phone verification script (390×844, DPR 2, colour then ASCII)
@@ -159,15 +189,16 @@ fine); menu stays 400 ms after a pick, 1100 ms after a slot press.
 Use `tools/phone_test.py` with `--mic-wav` for real Soniox takes and `--init-js` for the slow-audio race
 (fix9 §16's init script). Capture each as a constant-res clip (`--screencast`).
 
-1. **Cold page, first press.** Expect: grey dashed ring + "MIC WARMING" + grey stub over the `@`; no green until
-   the console logs the socket config. Release early: "let go · hold again"; next press: green within ~150 ms.
-2. **Normal take.** Expect: green mic + five bars over the `@` (both skins); on release a dashed card with partial
-   words within 220 ms; bold card at the final; ✓ badge on the mic; the line in the feed after ~420 ms; "…" over the
+1. **Cold page, first press.** Expect: a grey dashed ring on the mic button only (no caption, nothing over the
+   `@`); no green until the console logs the socket config. Release early: a tiny shake of the button, no text;
+   the first words of the next press are not lost (buffered); next press: green within ~150 ms.
+2. **Normal take.** Expect: green mic + five bars over the `@` (both skins), no words anywhere. On release: nothing
+   on the game screen (no pill, card, bubble or ✓ badge); the line appears only in the feed; "…" over the
    responder; first NPC card ≥ 900 ms after release.
-3. **Empty take** (`--mic-wav` silence, 1 s). Expect: grey "didn't catch that" card, `?` over the `@`, caption for
-   1.6 s, nothing sent (`/api/say` not posted).
-4. **Denied mic** (Playwright context without the permission). Expect: amber "microphone blocked · allow it in
-   Settings", persisting; no card over the `@`.
+3. **Empty take** (`--mic-wav` silence, 1 s). Expect: a tiny shake of the mic button, no text, no `?` over the `@`,
+   nothing sent (`/api/say` not posted).
+4. **Denied mic** (Playwright context without the permission). Expect: the mic button greyed with "MIC BLOCKED",
+   persisting; nothing else on screen.
 5. **Menu: stick.** Expect: up/down only; sideways does nothing; the strip opens under the selected row 120 ms after
    the stick settles and the rows below move with it; hold-repeat 500/200 ms; ✓ performs with the beat; tapping the
    selected row again performs; ✕ and ACT leave.
