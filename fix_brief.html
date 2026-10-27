@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fixion / DRDR: implementation brief</title>
+<link rel="stylesheet" href="assets/fonts.css">
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; background: #0b0e14; color: #d6dee2; font: 15px/1.6 "JetBrains Mono", ui-monospace, Menlo, monospace; }
+  main { max-width: 900px; margin: 0 auto; padding: 24px 18px 80px; }
+  h1, h2, h3 { color: #6fe2c7; font-weight: 700; line-height: 1.25; }
+  h1 { font-size: 24px; } h2 { font-size: 19px; margin-top: 40px; border-top: 1px solid #1e2a30; padding-top: 18px; } h3 { font-size: 16px; color: #e6b05c; }
+  a { color: #6fe2c7; }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; margin: 12px 0; }
+  th, td { border: 1px solid #1e2a30; padding: 6px 8px; vertical-align: top; text-align: left; }
+  th { background: #111820; color: #c8dcd7; }
+  code { background: #121a22; padding: 1px 5px; border-radius: 4px; font-size: 13px; }
+  pre { background: #0e141b; border: 1px solid #1e2a30; border-radius: 8px; padding: 12px; overflow: auto; }
+  blockquote { border-left: 3px solid #6fe2c7; margin: 0; padding: 2px 14px; color: #a8b4ba; }
+  .mermaid { background: #0e141b; border: 1px solid #1e2a30; border-radius: 8px; padding: 10px; margin: 14px 0; }
+  .mock { display: flex; gap: 14px; flex-wrap: wrap; margin: 16px 0; }
+  .mock a { display: block; background: #111820; border: 1px solid #2a3a40; border-radius: 10px; padding: 10px 14px; text-decoration: none; color: #d6dee2; }
+  .mock a b { color: #6fe2c7; display: block; }
+  .mock a:hover { border-color: #6fe2c7; }
+  del { color: #96a0a6; text-decoration-color: #c47878; }
+  hr { border: 0; border-top: 1px solid #1e2a30; margin: 32px 0; }
+  .clips { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+  .clip { background: #111820; border: 1px solid #1e2a30; border-radius: 10px; padding: 8px; }
+  .clip video { width: 100%; border-radius: 6px; background: #000; display: block; }
+  .clip b { color: #6fe2c7; } .clip small { color: #a8b4ba; display: block; margin-top: 4px; line-height: 1.45; }
+  .clip code { font-size: 11px; }
+  .clips { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+  .clip { background: #111820; border: 1px solid #1e2a30; border-radius: 10px; padding: 8px; }
+  .clip video { width: 100%; border-radius: 6px; background: #000; display: block; }
+  .clip b { color: #6fe2c7; } .clip small { color: #a8b4ba; display: block; margin-top: 4px; line-height: 1.45; }
+  .clip code { font-size: 11px; }
+  .clips { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+  .clip { background: #111820; border: 1px solid #1e2a30; border-radius: 10px; padding: 8px; }
+  .clip video { width: 100%; border-radius: 6px; background: #000; display: block; }
+  .clip b { color: #6fe2c7; } .clip small { color: #a8b4ba; display: block; margin-top: 4px; line-height: 1.45; }
+  .clip code { font-size: 11px; }
+</style>
+</head>
+<body>
+<main>
+  <nav class="mock">
+    <a href="mock/talk.html"><b>Mockup A · talk flow</b>green bars over the @, the take card, failures</a>
+    <a href="mock/menu.html"><b>Mockup B · action menu</b>stick up/down, ✕/✓ strip, raised ACT, the commit</a>
+    <a href="mock/slot.html"><b>Mockup C · mic to action</b>the slot, the ray, the morph, the gate</a>
+    <a href="index.html#clips"><b>Clips</b>14 recorded runs of the mockups, A1–C8</a>
+    <a href="index.html"><b>The proposal</b>back to proposal.md, rendered</a>
+  </nav>
+<article id="doc">
+<h1 id="implementation-brief-the-round-after-fix10-fix11-from-the-ux-proposal">Implementation brief: the round after fix10 (fix11), from the UX proposal</h1>
+<p>Written 2026-10-27 18:45 JST against the drdr-dr tree as it stood at 18:25 JST, while the <strong>fix10 round was still
+running</strong> (fix10.md, 18:05 JST; its code is tagged <code>fix10 §n</code> in comments). Nothing in drdr-dr was edited for this
+brief. Line numbers are from 18:25 and will drift; function names are the anchors.</p>
+<p><strong>How to read it.</strong> Section A is what fix10 already has in the tree (so the next round does not redo it). Section B
+is what the proposal (<code>proposal.md</code>) changes or adds, ordered by impact, each mapped to files and functions, with
+what to verify on a phone. Section C is the phone verification script. Where the proposal and fix10&#39;s own brief
+disagree, the disagreement is stated and the recommendation is marked; Josh decides.</p>
+<hr>
+<h2 id="a-already-in-the-fix10-tree-1825-jst-per-file">A. Already in the fix10 tree (18:25 JST), per file</h2>
+<table>
+<thead>
+<tr>
+<th>Concern</th>
+<th>Where</th>
+<th>What fix10 does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Live partials from Soniox</td>
+<td><code>web/drdr-bridge.js</code> <code>livePartial</code>, <code>c.live</code>; <code>player.rb</code> <code>absorb_bridge</code> (<code>data[&#39;partial&#39;]</code>)</td>
+<td>non-final tokens reach the game ≤10×/s as <code>partial</code></td>
+</tr>
+<tr>
+<td>Arming state</td>
+<td><code>drdr-bridge.js</code> <code>pttDown</code> sets <code>stt:&#39;connecting&#39;</code>, <code>&#39;listening&#39;</code> only after the socket took its config; <code>player.rb</code> <code>@stt_live</code></td>
+<td>the proposal&#39;s <em>arming</em> exists under the name <code>connecting</code></td>
+</tr>
+<tr>
+<td>Failure reasons</td>
+<td><code>drdr-bridge.js</code> <code>TELL</code> map, <code>notify(key)</code> → <code>stt_msg</code>; <code>player.rb</code> ~l.305 shows them &quot;in the failed pill (or slot)&quot;</td>
+<td>empty / blocked / reconnecting / failed, with <code>Lang</code> strings</td>
+</tr>
+<tr>
+<td>Speech pill (the proposal&#39;s take card)</td>
+<td><code>player.rb</code> <code>@talk_ui</code> phases <code>:listening :sending :sent :failed</code>, <code>tick_confirm</code>; <code>action_ui.rb</code> <code>draw_speech10</code>, <code>draw_live_card</code>; <code>layout.rb</code> <code>@pill</code> (over the mic, left of ACT)</td>
+<td>the sent line &quot;flies&quot; into the feed (<code>director.rb</code> l.21 note)</td>
+</tr>
+<tr>
+<td>Slot for a spoken action</td>
+<td><code>player.rb</code> <code>@slot</code> phases <code>:listening :sending :judging :confirm :pressed :reason :said :failed :cancelled</code>, <code>inspire</code>, <code>inspired</code>, <code>pend</code>, <code>confirm_slot</code>, <code>cancel_slot</code>, <code>slot_height</code>; <code>action_ui.rb</code> <code>draw_slot10</code>, <code>slot_beams</code>, <code>press_fx</code></td>
+<td>slot opens under the selected row; standing additive rays in the slot while speaking; label churns in (<code>churn_text</code>); one beam sweeps the row on landing</td>
+</tr>
+<tr>
+<td>Confirm policy</td>
+<td><code>player.rb</code> <code>harmful?</code>, <code>pend</code> (`must = hostile</td>
+<td></td>
+</tr>
+<tr>
+<td>Up/down only, ✓/✕</td>
+<td><code>player.rb</code> <code>menu_step</code> (<code>dir[0] == 0</code> only), <code>select_row</code>, <code>confirm_choice</code>; <code>action_ui.rb</code> <code>draw_strip10</code>, <code>button10</code>, <code>check_mark</code>, <code>cross_mark</code></td>
+<td>the strip under the selected row</td>
+</tr>
+<tr>
+<td>ACT raised</td>
+<td><code>layout.rb</code> l.58–62: ACT at <code>mic.y + 92</code>, the mic and pad moved down 36 px</td>
+<td>92 px, permanent</td>
+</tr>
+<tr>
+<td>Menu anchored low</td>
+<td><code>layout.rb</code> <code>@menu_floor</code>, <code>@menu_floor_right</code>; <code>player.rb</code> ~l.593 &quot;anchored low, by the thumbs&quot;</td>
+<td><strong>the card no longer floats beside the target</strong> (fix10.md §4 asked for this)</td>
+</tr>
+<tr>
+<td>Haptic</td>
+<td><code>drdr-bridge.js</code> <code>haptic()</code> (iOS switch trick) on press, release, ✓</td>
+<td></td>
+</tr>
+<tr>
+<td>Green indicator over the player (colour skin)</td>
+<td>fix10.md §9(a)</td>
+<td>asked; check <code>skin_color.rb</code> <code>draw_talk_indicator</code> for the bars</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="b-what-this-proposal-changes-or-adds-by-impact">B. What this proposal changes or adds, by impact</h2>
+<h3 id="b1-the-ray-should-run-from-the-mic-into-the-slot-highest-visual-impact-cheap">B1. The ray should run from the mic into the slot (highest visual impact, cheap)</h3>
+<ul>
+<li><strong>Now:</strong> <code>action_ui.rb</code> <code>slot_beams</code> draws rays standing <em>inside</em> the slot. The connection between the thing the
+thumb is holding and the place the words will land is not drawn.</li>
+<li><strong>Proposal:</strong> one beam from the top of the mic to the slot&#39;s centre (two <code>sprites/beam.png</code> at angle, widths 26
+and 9 px, <code>blendmode_enum: 2</code>, alpha 0.55/0.6, width and offset modulated by two sines), plus 4–8 <code>✦</code>/<code>·</code> labels
+drifting along it; it thins to 35 % on release and fades 300 ms after the judge answers. Keep fix10&#39;s in-slot
+sheen as the beam&#39;s landing glow.</li>
+<li><strong>Where:</strong> <code>action_ui.rb</code> new <code>mic_ray(from, to, level, thin)</code> called from <code>draw_slot10</code> for phases <code>:listening :sending :judging</code>; <code>layout.rb</code> <code>mic_at</code> for the origin; the slot&#39;s rect from <code>menu_geo</code>.</li>
+<li><strong>Budget:</strong> two sprites + ≤8 labels per frame. If <code>perf_test.py --throttle 6</code> drops under 30 fps, draw the ray into
+the existing koma-style render target at half size.</li>
+<li><strong>Verify on a phone:</strong> hold the violet mic with the menu open; the ray must appear within one frame, breathe
+with your voice, thin on release, and be gone 300 ms after the label lands.</li>
+</ul>
+<h3 id="b2-the-gate-rewrites-and-doubt-wait-only-confident-unchanged-harmless-acts-go-by-themselves">B2. The gate: rewrites and doubt wait; only confident, unchanged, harmless acts go by themselves</h3>
+<ul>
+<li><strong>Now:</strong> <code>pend</code> sets <code>auto_at</code> for rewrites too (<code>AUTO_REWRITTEN</code>), so an &quot;Attempt to fly&quot; performs on its own
+if the player does nothing. Josh&#39;s 18:09 §9(d): &quot;Wait for the green confirm on rewrites, doubts or low margins.&quot;</li>
+<li><strong>Proposal:</strong> <code>auto_at = nil</code> whenever <code>rewritten</code>, whenever the judge&#39;s top category P &lt; 0.75, or whenever the
+margin to the second category &lt; 0.25; <code>AUTO_PLAIN</code> stays for the rest but should drop to 320 ms (the proposal&#39;s
+<code>landed_auto → pressed</code>); 1.5 s is a long time to stare at a slot that will press itself.</li>
+<li><strong>Where:</strong> <code>sidecar/inspire.py</code> <code>decide</code> already returns <code>confidence</code> and <code>probs</code> (top 5); add <code>gate: bool</code>
+and <code>margin: float</code> to the dict so <code>player.rb</code> <code>pend</code> reads one flag instead of recomputing. <code>server.py</code>
+<code>api_inspire</code> passes <code>r</code> through unchanged, so nothing else moves. Hostile stays as <code>harmful?</code> in <code>player.rb</code>
+(presets <code>hit shoot shove grab</code>, <code>draw</code>, items) plus the sidecar&#39;s <code>HOSTILE</code> for learned verbs.</li>
+<li><strong>Verify:</strong> say &quot;fly over to her&quot;: the slot must show the ✓/✕ strip and wait; say &quot;wave at her&quot;: it performs by
+itself within half a second; say &quot;punch her&quot;: it waits. Log line <code>ev: inspire</code> shows <code>gate</code> and <code>margin</code>.</li>
+</ul>
+<h3 id="b3-a-reason-is-not-final-the-slot-stays-the-next-mic-press-replaces-it">B3. A reason is not final: the slot stays, the next mic press replaces it</h3>
+<ul>
+<li><strong>Now:</strong> <code>tick_confirm</code> clears a <code>:reason</code> slot after 230 ticks (~3.8 s); <code>inspire</code> cancels a <code>:confirm</code> slot
+when the mic is pressed again, but a <code>:reason</code> slot has already vanished.</li>
+<li><strong>Proposal:</strong> a <code>:reason</code> slot persists until ✕, the stick, ACT, or the next mic press (which reuses the slot:
+<code>inspire</code> → <code>@slot = @slot.merge(phase: :listening, …)</code> instead of a new slot). Show &quot;hold the mic to try again&quot;
+at the right of the slot. The feed copy stays as is.</li>
+<li><strong>Where:</strong> <code>player.rb</code> <code>tick_confirm</code> (<code>when :reason</code>), <code>inspire</code> (the <code>cancel_slot(:replaced)</code> branch should
+cover <code>:reason</code> too), <code>action_ui.rb</code> <code>draw_slot10</code> (<code>:reason</code> text), <code>lang.rb</code> (both languages).</li>
+<li><strong>Verify:</strong> &quot;set my rose on fire&quot; → red slot; hold the mic again without leaving the menu: the red slot turns
+violet and listens.</li>
+</ul>
+<h3 id="b4-the-menu-card-beside-the-target-not-docked-low-a-disagreement-josh-decides">B4. The menu card: beside the target, not docked low (a disagreement; Josh decides)</h3>
+<ul>
+<li><strong>Now:</strong> fix10.md §4 asked for the card &quot;anchored low rather than floating by the target&quot;, and <code>layout.rb</code>
+<code>@menu_floor</code> does that.</li>
+<li><strong>Proposal:</strong> keep it beside the target (fix3&#39;s placement, <code>build_menu_rows</code>), because the thing you act on and
+its verbs should be one glance apart and the map must stay the performance (UX_IMPLICATIONS priority 2). The
+thumbs do not need to reach the card: the stick selects and ✓/✕ sit under the selected row wherever the card is.</li>
+<li><strong>Trade-off, honestly:</strong> the low card is nearer the thumbs for <em>tapping</em> rows and keeps the top of the map
+clear; the target card keeps the target in view and makes far-drag targets legible. If both exist, make it a
+Settings row (&quot;Menu: by the target / near the thumbs&quot;) and test with Josh; do not keep two code paths without a
+switch.</li>
+<li><strong>Where:</strong> <code>player.rb</code> <code>build_menu_rows</code> (the candidate sides and <code>keep_clear</code> scores), <code>layout.rb</code>
+<code>@menu_floor*</code>.</li>
+</ul>
+<h3 id="b5-the-take-card-rises-from-the-mic-and-lifts-into-the-feed-small-deltas-to-the-pill">B5. The take card rises from the mic and lifts into the feed (small deltas to the pill)</h3>
+<ul>
+<li><strong>Now:</strong> <code>draw_speech10</code> / <code>@pill</code> is a strip over the mic, left of ACT, and the sent line &quot;flies&quot; into the feed.</li>
+<li><strong>Proposal:</strong> keep it. Three details: show the partial words in a <strong>dashed</strong> box and the final in a <strong>solid bold</strong>
+one (the player must be able to tell &quot;still forming&quot; from &quot;this is it&quot;); pop a ✓ badge on the mic&#39;s shoulder for
+300 ms at the final (the eye is on the thumb); lift the card into the feed only after 420 ms so the final can be
+read. Failure kinds keep their own looks: grey for <em>didn&#39;t catch that</em> (plus the existing <code>?</code> over the <code>@</code>), amber
+for <em>mic not ready</em> / <em>blocked</em> (persisting until the next press).</li>
+<li><strong>Where:</strong> <code>action_ui.rb</code> <code>draw_speech10</code>, <code>draw_live_card</code>; <code>player.rb</code> <code>@talk_ui</code> phases; <code>skin_color.rb</code> /
+<code>skin_ascii.rb</code> <code>draw_mic</code> (the badge).</li>
+<li><strong>Verify:</strong> on a cold page the first press shows the grey dashed ring and &quot;MIC WARMING&quot;; an early release says
+&quot;let go · hold again&quot; and the next press works; a normal take shows dashed words, then bold words, then the
+line in the feed.</li>
+</ul>
+<h3 id="b6-the-commit-moment-one-shared-beat-for-menu-picks-and-slot-presses">B6. The commit moment: one shared beat for menu picks and slot presses</h3>
+<ul>
+<li><strong>Now:</strong> <code>press_fx</code> (white rect + glow, additive) exists; <code>@pressed[:ticks]</code> holds the beat.</li>
+<li><strong>Proposal:</strong> make the beat the same for a ✓ on a curated row and on a slot: white wash 420 ms, <strong>hitstop 5 ticks
+on the UI layer only</strong> (not the map), a <code>·</code> glyph ring (<code>dot_ring</code>, 600 ms), 9–12 glyph sparks from the row&#39;s
+right end through the <code>marks</code> system, a 2-frame 14 % flash, 3 px nudge for 180 ms, and the tick sound
+(<code>tools/synth_fx.py</code>: 1800→600 Hz, 250 ms). Then the △ line at +520 ms, the menu leaves at +900 ms (+1100 for a
+slot, so the new row is seen).</li>
+<li><strong>Where:</strong> <code>player.rb</code> <code>confirm_choice</code>, <code>confirm_slot</code>, <code>run_confirmed</code>, <code>@pressed[:ticks]</code>; <code>action_ui.rb</code>
+<code>press_fx</code>, <code>dot_ring</code>; <code>stage.rb</code> <code>time_scale</code> (a UI-only variant: freeze <code>@pressed</code>/slot/ray timers, not
+<code>@presets</code>); <code>audio.rb</code> + <code>tools/synth_fx.py</code> for the tick.</li>
+<li><strong>Verify:</strong> a ✓ feels like a hit (the menu freezes for a beat); the map keeps breathing underneath.</li>
+</ul>
+<h3 id="b7-green-bars-over-the-player-in-both-skins">B7. Green bars over the player in both skins</h3>
+<ul>
+<li><strong>Now:</strong> fix10.md §9(a) asks for it in colour; the ASCII skin today only has the <code>?</code>.</li>
+<li><strong>Proposal:</strong> five bars (4 px wide, 4 px gap, 4–24 px by level, per-bar phase as the web build&#39;s <code>drawVoice</code>)
+with an additive glow in colour; <code>|</code> <code>:</code> <code>.</code> glyph columns in ASCII; a faint grey stub plus &quot;…&quot; while arming.</li>
+<li><strong>Where:</strong> <code>skin_color.rb</code> <code>draw_talk_indicator</code> (l.1354), <code>skin_ascii.rb</code> <code>draw_talk_indicator</code> (l.1008);
+<code>pl.level</code> from the bridge.</li>
+</ul>
+<h3 id="b8-cancel-while-judging-must-discard-the-late-answer">B8. Cancel while judging must discard the late answer</h3>
+<ul>
+<li><strong>Now:</strong> <code>inspired</code> ignores a result when <code>@slot[:phase] != :judging || @slot[:heard] != text</code>; good. But
+<code>api_inspire</code> has already added the verb to <code>player_actions</code> and spread it (<code>spread()</code>), so a cancelled action
+still enters the menus later.</li>
+<li><strong>Proposal:</strong> send an <code>inspire_id</code> with the request; a cancel posts <code>/api/inspire/cancel {id}</code>; the sidecar
+skips <code>pa.add</code> and <code>spread()</code> for a cancelled id (or adds it with <code>uses: 0</code> and no spread). Minor, but it keeps
+principle 10 (nothing kept that was not seen).</li>
+<li><strong>Where:</strong> <code>server.py</code> <code>api_inspire</code> (+ a small <code>api_inspire_cancel</code>), <code>player.rb</code> <code>cancel_slot</code>, <code>net.rb</code>.</li>
+</ul>
+<h3 id="b9-timings-table-to-adopt-ms-unless-ticks">B9. Timings table to adopt (ms unless ticks)</h3>
+<p>See <code>proposal.md</code> §4. The ones that differ from fix10&#39;s constants: <code>AUTO_PLAIN</code> 90 ticks → 20 ticks (320 ms);
+<code>:reason</code> auto-clear 230 ticks → never; slot open 220 ms (fix10&#39;s <code>slot_height</code> eases over 10 ticks = 167 ms,
+fine); menu stays 400 ms after a pick, 1100 ms after a slot press.</p>
+<hr>
+<h2 id="c-phone-verification-script-390844-dpr-2-colour-then-ascii">C. Phone verification script (390×844, DPR 2, colour then ASCII)</h2>
+<p>Use <code>tools/phone_test.py</code> with <code>--mic-wav</code> for real Soniox takes and <code>--init-js</code> for the slow-audio race
+(fix9 §16&#39;s init script). Capture each as a constant-res clip (<code>--screencast</code>).</p>
+<ol>
+<li><strong>Cold page, first press.</strong> Expect: grey dashed ring + &quot;MIC WARMING&quot; + grey stub over the <code>@</code>; no green until
+the console logs the socket config. Release early: &quot;let go · hold again&quot;; next press: green within ~150 ms.</li>
+<li><strong>Normal take.</strong> Expect: green mic + five bars over the <code>@</code> (both skins); on release a dashed card with partial
+words within 220 ms; bold card at the final; ✓ badge on the mic; the line in the feed after ~420 ms; &quot;…&quot; over the
+responder; first NPC card ≥ 900 ms after release.</li>
+<li><strong>Empty take</strong> (<code>--mic-wav</code> silence, 1 s). Expect: grey &quot;didn&#39;t catch that&quot; card, <code>?</code> over the <code>@</code>, caption for
+1.6 s, nothing sent (<code>/api/say</code> not posted).</li>
+<li><strong>Denied mic</strong> (Playwright context without the permission). Expect: amber &quot;microphone blocked · allow it in
+Settings&quot;, persisting; no card over the <code>@</code>.</li>
+<li><strong>Menu: stick.</strong> Expect: up/down only; sideways does nothing; the strip opens under the selected row 120 ms after
+the stick settles and the rows below move with it; hold-repeat 500/200 ms; ✓ performs with the beat; tapping the
+selected row again performs; ✕ and ACT leave.</li>
+<li><strong>Slot: ok</strong> (&quot;tap her on the shoulder&quot;). Expect: slot opens 220 ms, the ray from the mic, words typed on
+release, label churns in, performs by itself within 320 ms, the new row stays visible 1.1 s with a violet dot,
+<code>ev: inspire</code> shows <code>gate: false</code>.</li>
+<li><strong>Slot: rewrite</strong> (&quot;fly over to her&quot;). Expect: struck-through original under the churning label, the strip with
+&quot;do this instead?&quot;, nothing happens until ✓; ✕ closes the slot and the verb is not in the menu afterwards.</li>
+<li><strong>Slot: hostile</strong> (&quot;punch her in the jaw&quot;). Expect: waits for ✓ even at P 0.9; the 양으로 갈겨 버리기 case in 루이
+뉘똥 샾 must wait too.</li>
+<li><strong>Slot: reason</strong> (&quot;set my rose on fire&quot;). Expect: red slot with the sentence, the feed copy, &quot;hold the mic to try
+again&quot;; a second press reuses the slot.</li>
+<li><strong>Slot: slow judge</strong> (<code>--throttle 0.5,2000</code>). Expect: the words under the sweeping underline, &quot;judging…&quot; after
+2 s, the thread-ray still drawn, fail-open at 5 s with &quot;as said&quot; and the gate if hostile.</li>
+<li><strong>Say</strong> (&quot;tell her she&#39;s beautiful&quot;). Expect: &quot;said ↓&quot; for 700 ms, the words become <code>ADVENTURER:</code> in the feed,
+Act mode leaves 400 ms later.</li>
+<li><strong>FPS.</strong> <code>perf_test.py --throttle 1,4,6</code> with the ray on screen; ≥ 30 fps at 6×.</li>
+<li><strong>Korean world</strong> (루이 뉘똥 샾): every caption and slot text in Korean; the churn never scrambles syllables.</li>
+</ol>
+
+</article>
+
+</main>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: false, theme: 'dark', themeVariables: { primaryColor: '#163a34', primaryTextColor: '#d6dee2', primaryBorderColor: '#6fe2c7', lineColor: '#6fe2c7', fontFamily: 'JetBrains Mono, monospace', fontSize: '13px' } });
+  await mermaid.run({ querySelector: '.mermaid' });
+</script>
+</body>
+</html>

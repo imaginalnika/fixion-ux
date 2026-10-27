@@ -1,0 +1,624 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fixion / DRDR: mobile UX proposal</title>
+<link rel="stylesheet" href="assets/fonts.css">
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; background: #0b0e14; color: #d6dee2; font: 15px/1.6 "JetBrains Mono", ui-monospace, Menlo, monospace; }
+  main { max-width: 900px; margin: 0 auto; padding: 24px 18px 80px; }
+  h1, h2, h3 { color: #6fe2c7; font-weight: 700; line-height: 1.25; }
+  h1 { font-size: 24px; } h2 { font-size: 19px; margin-top: 40px; border-top: 1px solid #1e2a30; padding-top: 18px; } h3 { font-size: 16px; color: #e6b05c; }
+  a { color: #6fe2c7; }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; margin: 12px 0; }
+  th, td { border: 1px solid #1e2a30; padding: 6px 8px; vertical-align: top; text-align: left; }
+  th { background: #111820; color: #c8dcd7; }
+  code { background: #121a22; padding: 1px 5px; border-radius: 4px; font-size: 13px; }
+  pre { background: #0e141b; border: 1px solid #1e2a30; border-radius: 8px; padding: 12px; overflow: auto; }
+  blockquote { border-left: 3px solid #6fe2c7; margin: 0; padding: 2px 14px; color: #a8b4ba; }
+  .mermaid { background: #0e141b; border: 1px solid #1e2a30; border-radius: 8px; padding: 10px; margin: 14px 0; }
+  .mock { display: flex; gap: 14px; flex-wrap: wrap; margin: 16px 0; }
+  .mock a { display: block; background: #111820; border: 1px solid #2a3a40; border-radius: 10px; padding: 10px 14px; text-decoration: none; color: #d6dee2; }
+  .mock a b { color: #6fe2c7; display: block; }
+  .mock a:hover { border-color: #6fe2c7; }
+  del { color: #96a0a6; text-decoration-color: #c47878; }
+  hr { border: 0; border-top: 1px solid #1e2a30; margin: 32px 0; }
+  .clips { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+  .clip { background: #111820; border: 1px solid #1e2a30; border-radius: 10px; padding: 8px; }
+  .clip video { width: 100%; border-radius: 6px; background: #000; display: block; }
+  .clip b { color: #6fe2c7; } .clip small { color: #a8b4ba; display: block; margin-top: 4px; line-height: 1.45; }
+  .clip code { font-size: 11px; }
+  .clips { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+  .clip { background: #111820; border: 1px solid #1e2a30; border-radius: 10px; padding: 8px; }
+  .clip video { width: 100%; border-radius: 6px; background: #000; display: block; }
+  .clip b { color: #6fe2c7; } .clip small { color: #a8b4ba; display: block; margin-top: 4px; line-height: 1.45; }
+  .clip code { font-size: 11px; }
+  .clips { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+  .clip { background: #111820; border: 1px solid #1e2a30; border-radius: 10px; padding: 8px; }
+  .clip video { width: 100%; border-radius: 6px; background: #000; display: block; }
+  .clip b { color: #6fe2c7; } .clip small { color: #a8b4ba; display: block; margin-top: 4px; line-height: 1.45; }
+  .clip code { font-size: 11px; }
+</style>
+</head>
+<body>
+<main>
+  <nav class="mock">
+    <a href="mock/talk.html"><b>Mockup A · talk flow</b>green bars over the @, the take card, failures</a>
+    <a href="mock/menu.html"><b>Mockup B · action menu</b>stick up/down, ✕/✓ strip, raised ACT, the commit</a>
+    <a href="mock/slot.html"><b>Mockup C · mic to action</b>the slot, the ray, the morph, the gate</a>
+    <a href="index.html#clips"><b>Clips</b>14 recorded runs of the mockups, A1–C8</a>
+    <a href="fix_brief.html"><b>Implementation brief</b>for the round after fix10, by file and function</a>
+  </nav>
+<article id="doc">
+<h1 id="fixion-drdr-the-mobile-ux-proposal-speech-the-action-menu-the-mic-in-the-menu">Fixion / DRDR: the mobile UX proposal (speech, the action menu, the mic in the menu)</h1>
+<p>Written 2026-10-27 (18:30 JST). Built on <code>docs/philosophy/PHILOSOPHY.md</code>, <code>ONTOLOGY.md</code> and <code>UX_IMPLICATIONS.md</code>
+in the drdr-dr tree, on the audit in <code>current_state.md</code> (failure points F1 to F8) and on <code>research.md</code>. Phone
+portrait first, iPhone Safari, the HTML5 build of the DragonRuby game. Everything here is implementable with what
+DragonRuby 7.18 already does in HTML5: additive sprites, render targets, labels. No shaders.</p>
+<p>Interactive mockups (touch and mouse, both skins, each state replayable): <a href="mock/talk.html">talk</a> ·
+<a href="mock/menu.html">menu</a> · <a href="mock/slot.html">mic to action</a>. Clips: <code>../media/</code>. The implementation brief for the next
+round is <code>fix_brief.md</code>.</p>
+<p>Josh&#39;s answers that shaped this (18:09 JST): show the player&#39;s own words in the feed by default (yes); the
+green indicator above the player while speaking comes back, in both skins; rewrites should be smooth; whether every
+spoken action waits for a confirm and whether a red reason is final are left to this proposal; a session is &quot;for now
+just being in the scene&quot;.</p>
+<blockquote>
+<p><strong>Relation to the fix10 round (in progress at 18:25 JST).</strong> fix10.md (18:05 JST) was written from the same audit and
+is already building most of this: live partials, a <em>connecting</em> state, a speech pill over the mic, the slot with its
+phases, up/down-only selection with ✓/✕, a raised ACT, standing beams in the slot, a confirm policy, haptics.
+Where this proposal differs it says so; <code>fix_brief.md</code> lists the deltas for the round after fix10. The two
+disagreements that need Josh: the menu card&#39;s place (fix10 docks it low near the thumbs; this proposal keeps it
+beside the target) and whether a rewrite may auto-confirm (fix10: after a delay; this proposal: never).</p>
+</blockquote>
+<hr>
+<h2 id="0-the-decisions-in-one-screen">0. The decisions in one screen</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Decision</th>
+<th>From which principle</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>While talking: no words on screen, a green mic, and five green level bars over the <code>@</code> in both skins.</td>
+<td>P4 speech is the main verb; Josh&#39;s capture rule</td>
+</tr>
+<tr>
+<td>2</td>
+<td>On release: a <strong>take card</strong> rises from the mic with the partial words at once (dashed), solidifies when final, ticks on the mic, then lifts into the feed as the player&#39;s line.</td>
+<td>P10 nothing kept that was not seen; Q1 &quot;yes, show&quot;</td>
+</tr>
+<tr>
+<td>3</td>
+<td>A press never lights green until audio is flowing. Before that the mic is <strong>arming</strong> (grey dashed ring). Releasing while arming never finalizes; it says &quot;let go · hold again&quot;.</td>
+<td>F3 (the iOS first-press race); orb-ui&#39;s &quot;connecting&quot; rule</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Four failure kinds, four different looks: <em>arming</em> (grey), <em>didn&#39;t catch that</em> (grey, a <code>?</code> beat over the <code>@</code>), <em>mic not ready</em> (amber, persists, tap to retry), <em>microphone blocked</em> (amber, says where to fix it).</td>
+<td>research §1 Meta&#39;s error types</td>
+</tr>
+<tr>
+<td>5</td>
+<td>In Act mode the left stick moves the selection <strong>up and down only</strong>. Left and right do nothing.</td>
+<td>F6 mixed semantics</td>
+</tr>
+<tr>
+<td>6</td>
+<td>The ✕ (red) ✓ (green) pair appears in its own strip <strong>under the selected row</strong>, rows below move down with it (160 ms). ✓ commits; tapping the selected row again also commits; ACT leaves.</td>
+<td>Josh&#39;s ask; HIG symbols; Xbox A/B colours</td>
+</tr>
+<tr>
+<td>7</td>
+<td>ACT is raised 72 px above the mic&#39;s centre line, permanently (the caption moves under it).</td>
+<td>F7; Hoober&#39;s lower-middle band</td>
+</tr>
+<tr>
+<td>8</td>
+<td>The commit is a moment: press state (white wash 80 ms), hitstop 90 ms, a glyph ring, sparks, a 1800→600 Hz tick; the menu stays 400 ms, then leaves in 200 ms.</td>
+<td>P9 timing; 글자들 <code>contact()</code></td>
+</tr>
+<tr>
+<td>9</td>
+<td>Pressing the mic in the menu slides a <strong>slot</strong> open under the selected row (220 ms); a light ray runs from the mic into the slot while speaking; on release the heard words type in (≤400 ms); the judge runs under a thin ray.</td>
+<td>Josh&#39;s ask; P1 the screenplay is the world</td>
+</tr>
+<tr>
+<td>10</td>
+<td>The judged label <strong>lands in the slot</strong>: the original stays as a struck-through subline for 1.2 s while the label churns in (320 ms). The slot is pressed (same moment as 8), performed, and becomes an ordinary row with a violet dot; the menu stays 1.1 s.</td>
+<td>F4; P5 intent in, outcome out</td>
+</tr>
+<tr>
+<td>11</td>
+<td><strong>Gate rule (Q2):</strong> a spoken action performs at once when the judge said <code>ok</code> or <code>duplicate</code> with P ≥ 0.75 <strong>and</strong> the preset is not hostile. Any rewrite, any doubt, any hostile act (hit/shoot/shove/grab) waits in the slot for ✓/✕.</td>
+<td>P5, P10; F1 (the 양 hit)</td>
+</tr>
+<tr>
+<td>12</td>
+<td>A red <strong>reason</strong> lands in the same slot, bold red, with the feed copy as today. <strong>Not final (Q4):</strong> the slot stays; holding the mic again replaces it; ✕ or the stick closes it.</td>
+<td>P5 fail open; Seaman/Pikachu beats for <em>no input</em>, honest status for <em>system</em></td>
+</tr>
+<tr>
+<td>13</td>
+<td><code>say</code> (it was speech): the words drop out of the slot into the feed as the player&#39;s line; Act mode leaves 400 ms later.</td>
+<td>ontology §11</td>
+</tr>
+<tr>
+<td>14</td>
+<td>Haptics: the iOS switch trick on mic down, mic up and ✓ only (direct gestures); the landing 2–5 s later uses sound and light only.</td>
+<td>research §5</td>
+</tr>
+<tr>
+<td>15</td>
+<td>The player is <strong>a given role</strong> (the adventurer, 광수, 주만): the UI never asks for a name or a character (Q5).</td>
+<td>ONTOLOGY §6</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="1-the-talk-flow">1. The talk flow</h2>
+<h3 id="1a-states">1a. States</h3>
+<pre class="mermaid">stateDiagram-v2
+  [*] --&gt; idle
+  idle --&gt; arming: mic down (haptic)
+  arming --&gt; listening: audio flowing (AudioContext running, mic track live, socket configured)
+  arming --&gt; warming_fail: mic up before audio flowed
+  arming --&gt; sys_fail: getUserMedia denied / socket error / 2.5 s without audio
+  listening --&gt; finalizing: mic up (haptic)
+  finalizing --&gt; heard: final text, non-empty
+  finalizing --&gt; nothing: final text empty
+  finalizing --&gt; sys_fail: socket closed / 5 s cap with nothing
+  heard --&gt; sent: take card lifts into the feed (ADVENTURER: …)
+  sent --&gt; idle: the room answers after the 0.9 s floor
+  nothing --&gt; idle: 1.6 s
+  warming_fail --&gt; idle: 2.2 s (or the next press)
+  sys_fail --&gt; arming: mic down again (tap to retry)</pre><h3 id="1b-what-the-player-sees-state-by-state">1b. What the player sees, state by state</h3>
+<p><strong>idle.</strong> The mic as today: mint ring, &quot;HOLD TO TALK&quot;.</p>
+<p><strong>arming (mic down).</strong> The ring turns grey and dashed and rotates; over the <code>@</code> a faint grey five-bar stub and a
+small &quot;…&quot;. Caption &quot;MIC WARMING&quot;. This is the state the current build does not have, and it is where the thirteen
+empty takes in the audit happened (F3). The green must not come on until the browser reports an audio frame to the
+worklet and the Soniox socket has taken its config message. Typical arming is 60–150 ms on a warm page and is barely
+seen; on a cold iOS page it is 300–2,000 ms and the player must see that something is being set up.</p>
+<p><strong>listening.</strong> The mic turns green with the three pulse rings scaled by level, as today. Over the <code>@</code>: five green
+bars (4 px wide, 4 px apart, 4–24 px tall by level, with the per-bar phase from the web build&#39;s <code>drawVoice</code>), an
+additive green glow behind them in the colour skin, <code>|</code>/<code>:</code>/<code>.</code> glyph columns in the ASCII skin. No words. This is
+the indicator Josh asked back for (18:09), in both skins.</p>
+<p><strong>finalizing (mic up).</strong> The mic shows the eight orbiting dots as today, but now the <strong>take card</strong> rises at once
+(220 ms, ease-out-back) from the top of the mic with whatever has been heard so far, in a dashed mint box with an
+ellipsis: Soniox&#39;s non-final tokens, which the bridge currently throws away. The card updates as tokens arrive.
+Median release-to-final is 2.3 s in the logs (F2); during that time the player reads their own words forming.</p>
+<p><strong>heard.</strong> The card solidifies: solid border, bold text, a ✓ badge pops on the mic&#39;s shoulder (300 ms ease-out-back)
+with a rising two-tone tick. 420 ms later the card <strong>lifts</strong> (260 ms, ease-in, shrinking to 86 %) into the feed and
+becomes the line <code>ADVENTURER: …</code> in the player&#39;s mint, which the fix9 &quot;Show my lines = Yes&quot; default already draws.
+The &quot;…&quot; over the predicted responder appears as today and the floor runs.</p>
+<p><strong>nothing (empty final, the stream had started).</strong> The card says &quot;didn&#39;t catch that&quot; in grey, a <code>?</code> drifts up from
+the <code>@</code> for 1.2 s (the existing beat, kept), the mic caption reads &quot;DIDN&#39;T CATCH THAT&quot; for 1.6 s. This is a
+character beat (Pikachu&#39;s &quot;Pika?&quot;), because the system did its job and heard silence.</p>
+<p><strong>warming_fail (released while arming).</strong> The card is amber: &quot;mic was still warming — hold again&quot;. Caption &quot;LET GO ·
+HOLD AGAIN&quot;. Engineering rule behind it: the bridge must not send silence + <code>finalize</code> to a socket that never got its
+config, and must not open a second socket; the pre-opened one is kept for the next press. The next press on a warm
+page then arms in ~100 ms and the player is talking.</p>
+<p><strong>sys_fail (denied, socket error, nothing after 2.5 s of arming, or a 5 s cap with no final).</strong> The card is
+amber and persists until the next press: &quot;mic not ready · tap to retry&quot;, or &quot;microphone blocked · allow it in
+Settings&quot; for a permission denial. Caption &quot;MIC NOT READY · TAP TO RETRY&quot;. The sidecar gets the client-side reason
+(fix9 §15). This is a system status and must look like one, not like a character beat.</p>
+<h3 id="1c-why-this-and-not-a-transcript-while-talking">1c. Why this and not a transcript while talking</h3>
+<p>Josh&#39;s rule is about capture: while you hold the button, only the green signal. The take card is understanding
+feedback after you let go: the words are shown exactly once, in the moment you are already looking at the mic, and
+then they become the committed line in the feed, which Josh now wants shown by default. The partial words appear
+<em>before</em> the final so the 2 s wait reads as progress, not as a spinner. No new permanent text on the screen.</p>
+<h3 id="1d-barge-in-while-talking">1d. Barge-in while talking</h3>
+<p>Pressing the mic during a performance cancels it as today. The take card does not change that. If a card from the
+previous take is still lifting when the next press comes, it finishes its lift (260 ms) and the new press starts
+arming; nothing is dropped.</p>
+<hr>
+<h2 id="2-the-action-menu">2. The action menu</h2>
+<h3 id="2a-layout">2a. Layout</h3>
+<ul>
+<li>The menu card stays <strong>beside the target on the map</strong> (right of it if there is room, else left, else below or
+above), as built in fix3. Reason: principle 2 of the UX implications, the scene stays visible; the thing you act
+on and the verbs are one glance apart. The alternative (a deck-docked list near the thumbs) was considered and
+rejected: it hides which target you are on and turns the map into a background.</li>
+<li>Rows 46 px, 22 px type, the selected row mint with the <code>›</code> as today; <code>»</code> marks walk-up verbs; item rows keep
+their icons.</li>
+<li><strong>ACT is raised 72 px</strong> (centre at the mic&#39;s centre minus 72 in DR&#39;s y-up coordinates), its caption moves under
+it, size unchanged (r 56). The lower-middle band is where a two-thumb grip on a portrait phone actually rests
+(Hoober); the very bottom was chosen for symmetry with the mic, not reach. The <code>lowered</code> scenario in the menu
+mockup shows the old position for comparison. In Act mode the caption reads &quot;LEAVE&quot;.</li>
+</ul>
+<h3 id="2b-input">2b. Input</h3>
+<ul>
+<li><strong>Stick: up/down only.</strong> Dead zone 16 px to take a direction, 10 px to let go (hysteresis, no jitter at the edge).
+A held direction repeats after 500 ms, then every 200 ms. Sideways motion in Act mode does nothing; the pad&#39;s
+left/right arrows are replaced by dots so the face says so.</li>
+<li><strong>✕ / ✓ strip.</strong> 120 ms after the selection settles, a 40 px strip opens under the selected row (160 ms,
+ease-out; rows below move down in sync). ✕ red at the left of the pair, ✓ green at the right (Xbox positions,
+both as symbols, 38 px disks, 44 px hit area). A small &quot;do it?&quot; label at the left of the strip; for a slot with a
+rewrite it reads &quot;do this instead?&quot;.</li>
+<li><strong>✓</strong> commits. <strong>Tapping the selected row again</strong> commits too (one-handed, no reach to the strip). Tapping any
+other row selects it and moves the strip.</li>
+<li><strong>✕</strong> closes the menu and leaves Act mode. <strong>ACT</strong> also leaves. The stick&#39;s left no longer means back.</li>
+<li>Desktop: ↑↓, Enter, Esc, E unchanged.</li>
+</ul>
+<h3 id="2c-the-commit-moment-every-pick-menu-or-slot">2c. The commit moment (every pick, menu or slot)</h3>
+<table>
+<thead>
+<tr>
+<th>ms</th>
+<th>what</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>0</td>
+<td>the row washes white (alpha 0.55 → 0 over 420 ms), the strip closes, a 1800→600 Hz sine tick, haptic if it was a tap</td>
+</tr>
+<tr>
+<td>0–90</td>
+<td><strong>hitstop</strong>: the menu, the ray and the deck freeze for 90 ms (the map keeps breathing)</td>
+</tr>
+<tr>
+<td>0</td>
+<td>a <code>·</code>/<code>.</code> glyph ring expands from the row&#39;s centre (600 ms, ease-out), 9–12 glyph sparks (`- /</td>
+</tr>
+<tr>
+<td>520</td>
+<td>the △ line enters the feed; the walk-up (if any) starts on the map</td>
+</tr>
+<tr>
+<td>900</td>
+<td>the menu leaves (200 ms, ease-in) and Act mode ends</td>
+</tr>
+</tbody></table>
+<p>This is 글자들&#39;s <code>contact()</code> at power ≈ 1 (hitstop .05+.05, sparks, ring, a sound) applied to a UI commit. It is
+the same vocabulary the game already uses for a landed blow, so a menu pick feels like part of the world rather than
+a widget. Josh&#39;s &quot;clear sign of being pressed&quot; is the white wash plus the hitstop; the hitstop is what makes it
+read even under a thumb.</p>
+<hr>
+<h2 id="3-the-mic-in-the-menu-a-spoken-action">3. The mic in the menu (a spoken action)</h2>
+<h3 id="3a-states">3a. States</h3>
+<pre class="mermaid">stateDiagram-v2
+  [*] --&gt; menu_idle: Act mode, a target, a selected row
+  menu_idle --&gt; slot_open: mic down (slot slides open under the selected row, 220 ms#59; ray from mic to slot)
+  slot_open --&gt; slot_listening: audio flowing (same arming rule as talk)
+  slot_listening --&gt; slot_filling: mic up (ray thins#59; heard words type into the slot, ≤ 400 ms)
+  slot_filling --&gt; slot_judging: words complete (underline sweeps#59; "judging…" after 2 s)
+  slot_judging --&gt; landed_auto: ok or duplicate, P ≥ 0.75, not hostile
+  slot_judging --&gt; landed_gated: rewrite, or P &lt; 0.75, or hostile preset
+  slot_judging --&gt; reason: missing_prerequisite or meta
+  slot_judging --&gt; said: speech
+  slot_judging --&gt; landed_auto: sidecar error or 5 s timeout (fail open, "as said")
+  landed_auto --&gt; pressed: 320 ms after landing
+  landed_gated --&gt; pressed: ✓ (or tap the slot)
+  landed_gated --&gt; closed: ✕ / stick left
+  pressed --&gt; performed: 600 ms (△ line in the feed#59; the slot becomes a row with a violet dot)
+  performed --&gt; menu_idle_closing: 1.1 s, then the menu leaves
+  reason --&gt; slot_open: mic down again (the slot is replaced)
+  reason --&gt; closed: ✕ / stick
+  said --&gt; closed: the words drop into the feed as ADVENTURER:, Act mode leaves 400 ms later
+  slot_listening --&gt; nothing: mic up with no words ("didn't catch that", closes after 900 ms)
+  slot_listening --&gt; closed: ✕ mid-speech
+  slot_judging --&gt; closed: ✕ while judging (the sidecar's answer is discarded)</pre><h3 id="3b-beat-by-beat">3b. Beat by beat</h3>
+<ol>
+<li><strong>Mic down (violet, in Act mode).</strong> A new row slides open under the selected row: 0→46 px in 220 ms, ease-out,
+the rows below moving with it. The slot is violet-tinted with a dashed border that marches. From the top of the
+mic a <strong>ray</strong> rises into the slot: a 26 px additive violet beam with a 9 px warm core, both wobbling in width and
+offset with two slow sines (&quot;fluid&quot;), and <code>✦</code>/<code>·</code> glyph motes drifting up the ray and dying in the slot. The mic&#39;s
+ten orbiting sparks run as today. Over the <code>@</code> nothing (an action is not speech).</li>
+<li><strong>Speaking.</strong> Nothing is written. The slot shows &quot;…&quot;. The ray breathes with the mic level.</li>
+<li><strong>Mic up.</strong> The ray thins to a thread (35 % width). The heard words <strong>type into the slot</strong>, 18 ms per character,
+capped at 400 ms for long phrases, with a blinking <code>_</code>. This is the one place the player reads what was heard
+before anything happens, and it answers F1.</li>
+<li><strong>Judging.</strong> A violet underline sweeps under the words (900 ms loop). The thread stays. After 2 s of waiting a
+small &quot;judging…&quot; appears at the right of the slot; this covers the 2–5 s slow-network case without changing
+state. At 5 s the sidecar fails open: the words become the label with an &quot;as said&quot; tag and, if the preset is
+hostile, the gate still applies.</li>
+<li><strong>Landed.</strong> The ray ends with a 300 ms fade. The label arrives in the slot:<ul>
+<li>If the judge kept it (<code>ok</code>): the label replaces the words with a 320 ms left-to-right <strong>churn</strong> (each letter
+settles out of <code>@#%&amp;*</code> glyphs, the fix8 banner&#39;s motion) and a rising tone.</li>
+<li>If it was rewritten: the heard words drop to a 13 px struck-through subline (&quot;<del>fly over to her</del> → an
+attempt&quot;) while the label churns in above; the subline fades after 1.2 s. The feed gets the existing
+struck-through rewrite line at the perform step. The morph is the smoothness Josh asked for: no cut, the
+original is visibly <em>becoming</em> the label.</li>
+<li>If it matched an existing verb (<code>duplicate</code>): the slot shows the existing label for 380 ms, then collapses while
+the existing row takes the press. No new row.</li>
+</ul>
+</li>
+<li><strong>Gate or not.</strong> <code>ok</code>/<code>duplicate</code> at P ≥ 0.75 and a non-hostile preset: the slot is pressed by itself 320 ms
+after landing. Anything else: the ✕/✓ strip opens under the slot and waits. Nothing is performed until ✓.</li>
+<li><strong>Pressed, performed.</strong> Exactly the commit moment of §2c, from the slot. 600 ms later the △ line enters the feed
+and the slot turns into an ordinary row (mint, <code>»</code> if it is a walk-up, a violet dot for 2.6 s that says &quot;new&quot;).
+The menu stays 1.1 s so the player sees the verb they made sitting among the others, then leaves. The verb is in
+the data already (fix3); now the player sees it join.</li>
+<li><strong>Reason.</strong> The slot turns red-tinted: the one-sentence reason in bold red, &quot;hold the mic to try again&quot; at the
+right, the strip opens with &quot;nothing happens&quot; and ✕ only. The feed gets the red line as today. The slot stays:
+the next mic press replaces it in place (the retry costs one gesture and the player keeps their spot in the menu),
+✕ or the stick closes it.</li>
+<li><strong>Said.</strong> The slot shows the words in quotes with &quot;said ↓&quot; for 700 ms, then they drop into the feed as
+<code>ADVENTURER: …</code>, the slot closes and Act mode leaves 400 ms later; the room answers after the floor.</li>
+</ol>
+<h3 id="3c-why-gate-only-some-of-them">3c. Why gate only some of them</h3>
+<p>Every spoken action could wait for ✓. That would cost two gestures per action on the most common path and work
+against principle 9 (timing is most of the feel). The gate is placed exactly where principle 5 needs it: where the
+judge changed the player&#39;s words (a rewrite is a proposal and the player must see it before it is performed), where
+the judge was unsure (P &lt; 0.75), and where the act hurts someone (the 양 case in the audit: &quot;ok&quot; at 0.83 and
+performed as a hit with blood). Hostile presets are <code>hit</code>, <code>shoot</code>, <code>shove</code>, <code>grab</code> (the sidecar&#39;s <code>HOSTILE</code> table)
+plus any learned verb whose preset maps to them. The sidecar already knows all three facts; <code>api_inspire</code> only has
+to return a <code>gate</code> field.</p>
+<h3 id="3d-why-a-reason-is-not-final">3d. Why a reason is not final</h3>
+<p>A reason is the judge saying &quot;not with what you have&quot;. The slot keeping the mic live is the cheapest possible
+&quot;then what?&quot;: the player is still on the same target with the same menu, and a second press replaces the red
+line. Making it final would send the player back through ACT → aim → mic for a one-word change (&quot;set it on fire&quot;
+→ &quot;wave it&quot;). The feed copy is still written, so the history is kept.</p>
+<hr>
+<h2 id="4-timings-ms">4. Timings (ms)</h2>
+<table>
+<thead>
+<tr>
+<th>Transition</th>
+<th>ms</th>
+<th>easing / note</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>mic down → arming ring visible</td>
+<td>0</td>
+<td>immediate; haptic (switch trick)</td>
+</tr>
+<tr>
+<td>arming → listening (warm page)</td>
+<td>60–150</td>
+<td>gated on the first audio frame + socket config, never a timer</td>
+</tr>
+<tr>
+<td>arming → &quot;mic not ready&quot;</td>
+<td>2500</td>
+<td>timer; amber, persists</td>
+</tr>
+<tr>
+<td>mic up → take card rises</td>
+<td>0–220</td>
+<td>ease-out-back; dashed; partial words</td>
+</tr>
+<tr>
+<td>take card final → ✓ badge</td>
+<td>0–300</td>
+<td>ease-out-back; tick 990→1480 Hz</td>
+</tr>
+<tr>
+<td>final → card lifts into feed</td>
+<td>420 → 680</td>
+<td>ease-in, shrink to 86 %</td>
+</tr>
+<tr>
+<td>nothing → idle</td>
+<td>1600</td>
+<td><code>?</code> beat over the <code>@</code> 1200</td>
+</tr>
+<tr>
+<td>warming_fail → idle</td>
+<td>2200</td>
+<td>or the next press</td>
+</tr>
+<tr>
+<td>ACT tap → menu open</td>
+<td>180</td>
+<td>ease-out, 10 px rise</td>
+</tr>
+<tr>
+<td>selection settles → ✕/✓ strip</td>
+<td>120 + 160</td>
+<td>strip ease-out; rows below in sync</td>
+</tr>
+<tr>
+<td>stick repeat</td>
+<td>500 then 200</td>
+<td>threshold crossing, hysteresis 16/10 px</td>
+</tr>
+<tr>
+<td>commit: white wash</td>
+<td>420</td>
+<td>linear fade</td>
+</tr>
+<tr>
+<td>commit: hitstop</td>
+<td>90</td>
+<td>menu, ray, deck only</td>
+</tr>
+<tr>
+<td>commit: ring / sparks / flash</td>
+<td>600 / 300–600 / 2 frames</td>
+<td>glyph ring <code>·</code>→<code>.</code></td>
+</tr>
+<tr>
+<td>commit → △ line</td>
+<td>520</td>
+<td></td>
+</tr>
+<tr>
+<td>menu leaves after a pick</td>
+<td>400 + 200</td>
+<td>ease-in</td>
+</tr>
+<tr>
+<td>mic down → slot open</td>
+<td>220</td>
+<td>ease-out; siblings move in sync</td>
+</tr>
+<tr>
+<td>mic up → words typed</td>
+<td>18 per char, ≤ 400</td>
+<td>blinking <code>_</code></td>
+</tr>
+<tr>
+<td>judging → &quot;judging…&quot; caption</td>
+<td>2000</td>
+<td></td>
+</tr>
+<tr>
+<td>judging → fail open</td>
+<td>5000</td>
+<td>&quot;as said&quot; tag</td>
+</tr>
+<tr>
+<td>landed → label churn</td>
+<td>320</td>
+<td>left to right, glyph churn</td>
+</tr>
+<tr>
+<td>landed → struck subline fades</td>
+<td>1200 + 500</td>
+<td></td>
+</tr>
+<tr>
+<td>landed_auto → pressed</td>
+<td>320</td>
+<td></td>
+</tr>
+<tr>
+<td>pressed → performed (△ line)</td>
+<td>600</td>
+<td>slot becomes a row</td>
+</tr>
+<tr>
+<td>performed → menu leaves</td>
+<td>1100 + 200</td>
+<td></td>
+</tr>
+<tr>
+<td>reason → slot replaced by next press</td>
+<td>0</td>
+<td>slot height reused</td>
+</tr>
+<tr>
+<td>said → words into feed</td>
+<td>700</td>
+<td>Act mode leaves +400</td>
+</tr>
+<tr>
+<td>ray fade after judge</td>
+<td>300</td>
+<td></td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="5-edge-cases">5. Edge cases</h2>
+<ul>
+<li><strong>Empty STT (talk).</strong> &quot;didn&#39;t catch that&quot; card, <code>?</code> over the <code>@</code>, caption; nothing is sent. Distinguished from
+system failure by whether the stream ever started (the audit&#39;s <code>streamStarted</code> test).</li>
+<li><strong>Empty STT (slot).</strong> The slot says &quot;didn&#39;t catch that&quot; for 900 ms and closes; the selection and strip return.</li>
+<li><strong>Cancel mid-speech (slot).</strong> ✕ or stick-left while listening: the ray ends, the slot closes, the socket&#39;s take is
+discarded (the bridge still finalizes the socket to stop billing, but the text is dropped).</li>
+<li><strong>Cancel while judging.</strong> Same; the sidecar&#39;s answer is ignored by id. Needs an <code>inspire_id</code> on the request and the
+game to ignore late answers (<code>Player#inspired</code> already checks <code>@inspiring</code>).</li>
+<li><strong>Barge-in while a slot is judging.</strong> A talk press is impossible in Act mode (the mic is the action mic), so there
+is no barge-in; ACT or ✕ cancels. Walking with the stick is impossible too (up/down only). Leaving Act mode with a
+slot judging cancels it.</li>
+<li><strong>The judge says impossible / forced outcome / multi-step / controls other.</strong> All land as rewrites and gate on ✓
+with the original struck through. The <code>impossible</code> rewrite is the comedy case (&quot;Attempt to fly&quot;); it is shown before
+it is performed so the joke is shared, not discovered.</li>
+<li><strong>Slow network 2–5 s.</strong> The words stay in the slot under the sweeping underline; &quot;judging…&quot; after 2 s; at 5 s fail
+open to the words as said, still gated if hostile. The thread-ray stays so the connection between mic and slot
+reads through the wait. Nothing else on screen moves.</li>
+<li><strong>The sidecar is down.</strong> As said, &quot;as said&quot; tag, no gate unless hostile (then ✓ is required, and the sidecar&#39;s
+absence means it performs locally and queues the facts).</li>
+<li><strong>Two takes in a row (talk).</strong> A press while the previous card is lifting: the lift finishes, the new press arms.</li>
+<li><strong>Scene switch mid-take.</strong> The bridge releases the mic and socket on scene switch (fix9 §15) and the state returns
+to idle; a card in flight is dropped.</li>
+<li><strong>Knocked out.</strong> Act mode is unavailable (today&#39;s rule); the talk flow is unchanged.</li>
+<li><strong>Korean worlds.</strong> Every caption has a Korean string (<code>lang.rb</code>); slot text and labels are Korean from the sidecar;
+the churn uses Hangul-safe glyphs (<code>@#%&amp;*</code> are fine; no syllable scrambling).</li>
+</ul>
+<hr>
+<h2 id="6-vfx-within-the-html5-budget">6. VFX, within the HTML5 budget</h2>
+<ul>
+<li><strong>Ray.</strong> Two stretched <code>beam.png</code> sprites (the game ships one) with <code>blendmode_enum: 2</code>, angle from the mic to
+the slot, widths 26 and 9 px, alpha 0.55 and 0.6, width and offset modulated per frame by two sines, plus 4–8
+<code>✦</code>/<code>·</code> labels drifting along it. Cost: two sprites and a handful of labels per frame. On DPR-capped phones this is
+nothing like the full-screen layers fix1 removed. Draw it into the existing <code>:drdr_koma</code>-style render target at
+half resolution only if profiling shows a cost; the mockup draws it directly.</li>
+<li><strong>Churn.</strong> The fix8 join banner&#39;s glyph churn (<code>skin_fx.rb</code>), applied to one label.</li>
+<li><strong>Hitstop.</strong> <code>Stage#time_scale</code> already exists (0.35 for 42 ticks on a big moment). A menu hitstop is a 5-tick full
+stop applied to the UI layer only; the map&#39;s ambient animation keeps running so it reads as impact, not a hang.</li>
+<li><strong>Ring and sparks.</strong> The game&#39;s <code>marks</code> system (glyph particles with <code>dx/dy/alpha</code>) draws both; the ring is the
+글자들 <code>addRing</code> <code>·</code> circle.</li>
+<li><strong>Flash.</strong> <code>@flash_at</code> exists; cap it at 14 % alpha for 2 frames.</li>
+<li><strong>Take card.</strong> One rounded-rect sprite (<code>card_r8</code>) and a label; it is the speech-card system with a mint accent and
+no name plate.</li>
+<li><strong>Haptics.</strong> A hidden <code>&lt;input type=&quot;checkbox&quot; switch&gt;</code> in the page toggled on <code>pointerdown</code>/<code>pointerup</code> on the mic
+and on ✓; nothing on async results.</li>
+<li><strong>Sound.</strong> Synthesised like <code>tools/synth_fx.py</code>: tick (1800→600 Hz, 250 ms), arm (880 Hz, 40 ms), listen (1320 Hz),
+heard (990→1480 Hz), warm-fail (330 Hz triangle), reason (240 Hz square, 250 ms).</li>
+</ul>
+<hr>
+<h2 id="7-how-pc-differs-briefly">7. How PC differs (briefly)</h2>
+<ul>
+<li>The mic flow is identical with Space; the take card and arming states apply as they are (desktop browsers have
+their own first-press audio unlock).</li>
+<li>The slot accepts <strong>typing</strong>: in Act mode, T or <code>/</code> opens the slot as a text field (the current dev path becomes
+the real one); Enter sends it to the same judge; the landing and gate are identical. This keeps one mental model
+for &quot;a new verb&quot; on both platforms.</li>
+<li>The ✕/✓ strip still appears (mouse users click it); Enter/Esc do the same.</li>
+<li>ACT&#39;s position does not matter on desktop; the landscape layout keeps its column.</li>
+<li>The menu may dock in the right column on wide screens, since there is no thumb to reach; it then points at the
+target with the existing pointer line.</li>
+</ul>
+<hr>
+<h2 id="8-how-each-choice-follows-from-the-philosophy">8. How each choice follows from the philosophy</h2>
+<ul>
+<li><strong>P1 The screenplay is the world.</strong> The slot shows the words that become the △ line; the take card shows the
+words that become the <code>ADVENTURER:</code> line. The player watches their input become script.</li>
+<li><strong>P2 The author never plays the player / P10 nothing shown that was not performed.</strong> The feed line appears only
+after the take is final and lifted; the △ line only after the press.</li>
+<li><strong>P4 Speech is the main verb; menus are the bridge.</strong> No words while talking; the slot makes the menu the place
+where speech lands, not a replacement for it.</li>
+<li><strong>P5 Intent in, outcome out.</strong> The gate sits exactly on rewrites, doubt and harm; everything else performs at once.
+The struck-through original keeps the rewrite honest.</li>
+<li><strong>P7 Bigger things, bigger effects.</strong> A heard take is a tick; a landing is a press with sparks; a reason is red and
+shakes; a join stays bigger than all of these.</li>
+<li><strong>P9 Timing is most of the feel.</strong> Every transition is under 320 ms except the ones that wait on the network, and
+those show progress (partials, typed words, the sweep) instead of a spinner.</li>
+<li><strong>P11 Every model-facing word is reviewable.</strong> This proposal adds no model-facing text. The <code>gate</code> field is a
+derived flag from answers Jev already gives.</li>
+</ul>
+<hr>
+<h2 id="9-open-questions-that-remain">9. Open questions that remain</h2>
+<ol>
+<li>Should the ✕/✓ strip also appear for curated menu rows, or only for slots and learned verbs? (The mockup shows it
+for every row, per Josh&#39;s ask; &quot;tap the row again&quot; makes the strip optional for fast players.)</li>
+<li>P ≥ 0.75 for the auto path is a guess from the inspire logs (ok at 0.83 was the misheard hit). It should be tuned
+on a week of live <code>ev: inspire</code> records.</li>
+<li>Should the take card show partial words at all in the Korean worlds, where Soniox&#39;s non-final tokens change more?
+(The mockup shows them; a setting could hide partials.)</li>
+<li>Scene transitions as a bigger &quot;being in the scene&quot; beat (Josh&#39;s 18:09 note to Base Models): not in this proposal.</li>
+</ol>
+
+</article>
+<h2 id="clips">Clips</h2>
+<p>Recorded from the mockups (portrait, 780×1688). A = talk, B = menu, C = mic to action. Tap to play.</p>
+<div class="clips">
+  <div class="clip"><video src="media/a-talk-ok.mp4" controls muted playsinline loop preload="metadata"></video><b>A1</b> <code>a-talk-ok.mp4</code><small><b>What to watch:</b> Talk, colour: the grey arming ring, then the green mic and five green bars over the @; on release the dashed take card fills with partial words, turns solid with a ✓ on the mic, and lifts into the feed.</small></div>
+  <div class="clip"><video src="media/a-talk-ok-ascii.mp4" controls muted playsinline loop preload="metadata"></video><b>A2</b> <code>a-talk-ok-ascii.mp4</code><small><b>What to watch:</b> The same take in the ASCII skin: the level bars as glyph columns over the @, the take card and the lift into the feed.</small></div>
+  <div class="clip"><video src="media/a-talk-slow.mp4" controls muted playsinline loop preload="metadata"></video><b>A3</b> <code>a-talk-slow.mp4</code><small><b>What to watch:</b> A 2.3 s finalize: the partial words keep forming in the dashed card, so the wait reads as progress, not a spinner.</small></div>
+  <div class="clip"><video src="media/a-talk-empty-and-notready.mp4" controls muted playsinline loop preload="metadata"></video><b>A4</b> <code>a-talk-empty-and-notready.mp4</code><small><b>What to watch:</b> Two failure looks: an empty take (grey "didn't catch that" plus the ? over the @), then a release while still arming (amber "let go · hold again", no finalize).</small></div>
+  <div class="clip"><video src="media/b-menu-select-confirm.mp4" controls muted playsinline loop preload="metadata"></video><b>B1</b> <code>b-menu-select-confirm.mp4</code><small><b>What to watch:</b> The stick moves the selection up and down only; the ✕/✓ strip opens under the selected row; ✓ gives the commit beat (white wash, hitstop, glyph ring, sparks) before the menu leaves.</small></div>
+  <div class="clip"><video src="media/b-menu-cancel-then-confirm.mp4" controls muted playsinline loop preload="metadata"></video><b>B2</b> <code>b-menu-cancel-then-confirm.mp4</code><small><b>What to watch:</b> ✕ closes the menu and leaves Act mode; the menu is reopened and a pick is confirmed with ✓.</small></div>
+  <div class="clip"><video src="media/c-slot-ok-auto.mp4" controls muted playsinline loop preload="metadata"></video><b>C1</b> <code>c-slot-ok-auto.mp4</code><small><b>What to watch:</b> Mic in the menu: a slot slides open under the row, the violet ray runs into it, "tap her on the shoulder" types in, the label "Tap shoulder" churns in, and it is pressed by itself (no gate). It becomes a row with a violet dot while the menu stays.</small></div>
+  <div class="clip"><video src="media/c-slot-ok-ascii.mp4" controls muted playsinline loop preload="metadata"></video><b>C2</b> <code>c-slot-ok-ascii.mp4</code><small><b>What to watch:</b> The same spoken action in the ASCII skin: the slot, ray, churn and auto-press.</small></div>
+  <div class="clip"><video src="media/c-slot-rewrite-gated.mp4" controls muted playsinline loop preload="metadata"></video><b>C3</b> <code>c-slot-rewrite-gated.mp4</code><small><b>What to watch:</b> A rewrite: "fly over to her" stays as a struck-through subline under "Attempt to fly", and the strip asks "do this instead?". Nothing happens until ✓.</small></div>
+  <div class="clip"><video src="media/c-slot-hostile-gated.mp4" controls muted playsinline loop preload="metadata"></video><b>C4</b> <code>c-slot-hostile-gated.mp4</code><small><b>What to watch:</b> A hostile act ("punch her in the jaw as hard as I can" → "Punch hard") always waits for ✓, which is the gate rule that would have stopped the 양 hit.</small></div>
+  <div class="clip"><video src="media/c-slot-duplicate.mp4" controls muted playsinline loop preload="metadata"></video><b>C5</b> <code>c-slot-duplicate.mp4</code><small><b>What to watch:</b> "wave at her" matches the existing Wave: the slot shows it briefly and collapses, and the existing row takes the press. No new row.</small></div>
+  <div class="clip"><video src="media/c-slot-reason-retry.mp4" controls muted playsinline loop preload="metadata"></video><b>C6</b> <code>c-slot-reason-retry.mp4</code><small><b>What to watch:</b> A red reason lands in the slot ("You don't have anything to light it with."); holding the mic again replaces it in place without leaving the menu.</small></div>
+  <div class="clip"><video src="media/c-slot-say.mp4" controls muted playsinline loop preload="metadata"></video><b>C7</b> <code>c-slot-say.mp4</code><small><b>What to watch:</b> Speech, not an action: "tell her she's beautiful" shows "said ↓", drops into the feed as the player's line, and Act mode leaves.</small></div>
+  <div class="clip"><video src="media/c-slot-slow-judge.mp4" controls muted playsinline loop preload="metadata"></video><b>C8</b> <code>c-slot-slow-judge.mp4</code><small><b>What to watch:</b> A 4.2 s judge: the underline sweeps under the words, "judging…" appears after 2 s, then the label lands and auto-presses.</small></div>
+</div>
+</main>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: false, theme: 'dark', themeVariables: { primaryColor: '#163a34', primaryTextColor: '#d6dee2', primaryBorderColor: '#6fe2c7', lineColor: '#6fe2c7', fontFamily: 'JetBrains Mono, monospace', fontSize: '13px' } });
+  await mermaid.run({ querySelector: '.mermaid' });
+</script>
+</body>
+</html>

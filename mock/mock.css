@@ -1,0 +1,14 @@
+@font-face { font-family: "JetBrains Mono"; src: url("../assets/fonts/jetbrainsmono-regular.ttf"); font-weight: 400; }
+@font-face { font-family: "JetBrains Mono"; src: url("../assets/fonts/jetbrainsmono-bold.ttf"); font-weight: 700; }
+@font-face { font-family: "JetBrains Mono"; src: url("../assets/fonts/jetbrainsmono-extrabold.ttf"); font-weight: 800; }
+html, body { margin: 0; background: #06080c; color: #c8dcd7; font-family: "JetBrains Mono", ui-monospace, monospace; height: 100%; }
+body { display: flex; flex-direction: column; align-items: center; min-height: 100%; }
+.phone { flex: none; width: 390px; height: 844px; position: relative; background: #090c12; overflow: hidden; touch-action: none; }
+canvas { display: block; touch-action: none; }
+#controls { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; max-width: 390px; justify-content: center; }
+#controls button { font: 12px "JetBrains Mono", monospace; background: #0e161c; color: #c8dcd7; border: 1px solid #2a3a40; border-radius: 6px; padding: 5px 9px; cursor: pointer; }
+#controls button.on { border-color: #6fe2c7; color: #6fe2c7; }
+#controls button.alt { border-style: dashed; }
+.note { max-width: 390px; font-size: 12px; color: #8a949c; padding: 0 8px 14px; line-height: 1.5; }
+.note a { color: #6fe2c7; }
+@media (max-height: 900px) { .phone { transform-origin: top center; } }
