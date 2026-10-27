@@ -45,6 +45,11 @@
   .clip video { width: 100%; border-radius: 6px; background: #000; display: block; }
   .clip b { color: #6fe2c7; } .clip small { color: #a8b4ba; display: block; margin-top: 4px; line-height: 1.45; }
   .clip code { font-size: 11px; }
+  .clips { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+  .clip { background: #111820; border: 1px solid #1e2a30; border-radius: 10px; padding: 8px; }
+  .clip video { width: 100%; border-radius: 6px; background: #000; display: block; }
+  .clip b { color: #6fe2c7; } .clip small { color: #a8b4ba; display: block; margin-top: 4px; line-height: 1.45; }
+  .clip code { font-size: 11px; }
 </style>
 </head>
 <body>
@@ -52,7 +57,7 @@
   <nav class="mock">
     <a href="mock/talk.html"><b>Mockup A · talk flow</b>green bars over the @, the take card, failures</a>
     <a href="mock/menu.html"><b>Mockup B · action menu</b>stick up/down, ✕/✓ strip, raised ACT, the commit</a>
-    <a href="mock/slot.html"><b>Mockup C · mic to action</b>the slot, the ray, the morph, the gate</a>
+    <a href="mock/slot.html"><b>Mockup C · mic to action</b>the bottom slot, the morph, the gate (no beam)</a>
     <a href="index.html#clips"><b>Clips</b>14 recorded runs of the mockups, A1–C8</a>
     <a href="index.html"><b>The proposal</b>back to proposal.md, rendered</a>
   </nav>
@@ -133,19 +138,18 @@ disagree, the disagreement is stated and the recommendation is marked; Josh deci
 </tbody></table>
 <hr>
 <h2 id="b-what-this-proposal-changes-or-adds-by-impact">B. What this proposal changes or adds, by impact</h2>
-<h3 id="b1-the-ray-should-run-from-the-mic-into-the-slot-highest-visual-impact-cheap">B1. The ray should run from the mic into the slot (highest visual impact, cheap)</h3>
+<h3 id="b1-no-beam-from-the-mic-to-the-slot-removed-per-josh-2138-jst">B1. No beam from the mic to the slot (removed per Josh, 21:38 JST)</h3>
 <ul>
-<li><strong>Now:</strong> <code>action_ui.rb</code> <code>slot_beams</code> draws rays standing <em>inside</em> the slot. The connection between the thing the
-thumb is holding and the place the words will land is not drawn.</li>
-<li><strong>Proposal:</strong> one beam from the top of the mic to the slot&#39;s centre (two <code>sprites/beam.png</code> at angle, widths 26
-and 9 px, <code>blendmode_enum: 2</code>, alpha 0.55/0.6, width and offset modulated by two sines), plus 4–8 <code>✦</code>/<code>·</code> labels
-drifting along it; it thins to 35 % on release and fades 300 ms after the judge answers. Keep fix10&#39;s in-slot
-sheen as the beam&#39;s landing glow.</li>
-<li><strong>Where:</strong> <code>action_ui.rb</code> new <code>mic_ray(from, to, level, thin)</code> called from <code>draw_slot10</code> for phases <code>:listening :sending :judging</code>; <code>layout.rb</code> <code>mic_at</code> for the origin; the slot&#39;s rect from <code>menu_geo</code>.</li>
-<li><strong>Budget:</strong> two sprites + ≤8 labels per frame. If <code>perf_test.py --throttle 6</code> drops under 30 fps, draw the ray into
-the existing koma-style render target at half size.</li>
-<li><strong>Verify on a phone:</strong> hold the violet mic with the menu open; the ray must appear within one frame, breathe
-with your voice, thin on release, and be gone 300 ms after the label lands.</li>
+<li><strong>Josh:</strong> &quot;i also don&#39;t want the &#39;line&#39; or &#39;beam&#39; from action mic to slot.&quot; The earlier mic-to-slot ray proposal is
+withdrawn: do <strong>not</strong> add a mic-to-slot beam, line or particle trail.</li>
+<li><strong>Now:</strong> <code>action_ui.rb</code> <code>slot_beams</code> draws rays standing <em>inside</em> the slot (not a mic-to-slot line).</li>
+<li><strong>Proposal:</strong> keep the &quot;speech went through&quot; signal on the slot itself: on mic up (<code>:listening</code> → <code>:sending</code>),
+one soft flash of the slot&#39;s own fill and frame (violet, alpha fading over ~380 ms / 23 ticks), then the words type
+in. The marching dashed border during <code>:listening</code> and the underline during <code>:judging</code> stay. If fix10&#39;s in-slot
+<code>slot_beams</code> read as a beam on the phone, tone them down to that flash; Josh decides.</li>
+<li><strong>Where:</strong> <code>action_ui.rb</code> <code>draw_slot10</code> (a <code>flash_at</code> tick on the slot set in <code>player.rb</code> when the take finalizes).</li>
+<li><strong>Verify on a phone:</strong> hold the violet mic with the menu open. Nothing should connect the mic and the slot. On
+release the slot flashes once, then the words type in.</li>
 </ul>
 <h3 id="b2-the-gate-rewrites-and-doubt-wait-only-confident-unchanged-harmless-acts-go-by-themselves">B2. The gate: rewrites and doubt wait; only confident, unchanged, harmless acts go by themselves</h3>
 <ul>
@@ -210,7 +214,7 @@ right end through the <code>marks</code> system, a 2-frame 14 % flash, 3 px nudg
 (<code>tools/synth_fx.py</code>: 1800→600 Hz, 250 ms). Then the △ line at +520 ms, the menu leaves at +900 ms (+1100 for a
 slot, so the new row is seen).</li>
 <li><strong>Where:</strong> <code>player.rb</code> <code>confirm_choice</code>, <code>confirm_slot</code>, <code>run_confirmed</code>, <code>@pressed[:ticks]</code>; <code>action_ui.rb</code>
-<code>press_fx</code>, <code>dot_ring</code>; <code>stage.rb</code> <code>time_scale</code> (a UI-only variant: freeze <code>@pressed</code>/slot/ray timers, not
+<code>press_fx</code>, <code>dot_ring</code>; <code>stage.rb</code> <code>time_scale</code> (a UI-only variant: freeze <code>@pressed</code>/slot timers, not
 <code>@presets</code>); <code>audio.rb</code> + <code>tools/synth_fx.py</code> for the tick.</li>
 <li><strong>Verify:</strong> a ✓ feels like a hit (the menu freezes for a beat); the map keeps breathing underneath.</li>
 </ul>
@@ -246,8 +250,8 @@ draws the heard words as a small grey subline under the churning label when <cod
 <li><strong>Proposal:</strong> while a slot is open, scroll the window so the last row and the slot are visible (<code>@menu_top = [n - MENU_MAX, 0].max</code>) and treat the slot as selected; on ✕, restore the previous <code>@sel</code>. In <code>draw_slot10</code>,
 drop the <code>s[:rewritten] &amp;&amp; s[:heard]</code> subline. Instead, churn from the heard words into the label (the same
 <code>churn_text</code> motion, seeded with <code>s[:heard]</code> rather than blanks), for rewrites and kept labels alike. Append the
-learned verb at the end of <code>@actions</code> so it stays at the bottom once performed. Keep the ray (B1) and the feed&#39;s
-rewrite line.</li>
+learned verb at the end of <code>@actions</code> so it stays at the bottom once performed. Keep the feed&#39;s rewrite line. (The
+mic-to-slot ray is gone; see B1.)</li>
 <li><strong>Verify:</strong> with a long menu scrolled to the top, hold the mic: the slot opens below the last row and the
 selection jumps to it. Say &quot;fly over to her&quot;: the words morph into &quot;Attempt to fly&quot; with no grey line left. ✓:
 &quot;Attempt to fly&quot; is the last row.</li>
@@ -270,7 +274,7 @@ Settings&quot;, persisting; no card over the <code>@</code>.</li>
 the stick settles and the rows below move with it; hold-repeat 500/200 ms; ✓ performs with the beat; tapping the
 selected row again performs; ✕ and ACT leave.</li>
 <li><strong>Slot: ok</strong> (&quot;tap her on the shoulder&quot;). Expect: slot opens 220 ms at the very bottom of the menu with the
-selection on it, the ray from the mic, words typed on release, the words morph into the label, performs by itself within 320 ms, the new row stays visible 1.1 s with a violet dot,
+selection on it, no beam from the mic, a single soft slot flash and words typed on release, the words morph into the label, performs by itself within 320 ms, the new row stays visible 1.1 s with a violet dot,
 <code>ev: inspire</code> shows <code>gate: false</code>.</li>
 <li><strong>Slot: rewrite</strong> (&quot;fly over to her&quot;). Expect: the words morph straight into &quot;Attempt to fly&quot; (no struck-through
 or grey original left in the slot), the strip with
@@ -280,10 +284,10 @@ or grey original left in the slot), the strip with
 <li><strong>Slot: reason</strong> (&quot;set my rose on fire&quot;). Expect: red slot with the sentence, the feed copy, &quot;hold the mic to try
 again&quot;; a second press reuses the slot.</li>
 <li><strong>Slot: slow judge</strong> (<code>--throttle 0.5,2000</code>). Expect: the words under the sweeping underline, &quot;judging…&quot; after
-2 s, the thread-ray still drawn, fail-open at 5 s with &quot;as said&quot; and the gate if hostile.</li>
+2 s, no beam, fail-open at 5 s with &quot;as said&quot; and the gate if hostile.</li>
 <li><strong>Say</strong> (&quot;tell her she&#39;s beautiful&quot;). Expect: &quot;said ↓&quot; for 700 ms, the words become <code>ADVENTURER:</code> in the feed,
 Act mode leaves 400 ms later.</li>
-<li><strong>FPS.</strong> <code>perf_test.py --throttle 1,4,6</code> with the ray on screen; ≥ 30 fps at 6×.</li>
+<li><strong>FPS.</strong> <code>perf_test.py --throttle 1,4,6</code> with a slot open and judging; ≥ 30 fps at 6×.</li>
 <li><strong>Korean world</strong> (루이 뉘똥 샾): every caption and slot text in Korean; the churn never scrambles syllables.</li>
 </ol>
 

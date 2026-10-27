@@ -139,11 +139,10 @@
     },
     bind() {
       MENU.bind();
-      let slotRow = null, beam = null, typer = null, prevSel = 0;
+      let slotRow = null, typer = null, prevSel = 0;
       const slotIndex = () => S.rows.indexOf(slotRow);
-      const slotCenter = () => { const rows = M.menuRows(); const r = rows[slotIndex()]; return r ? { x: r.x + r.w / 2, y: r.y + r.h / 2 } : { x: 360, y: 600 }; };
       function animateOpen(to, ms, then) { const row = slotRow; if (!row || !row.slot) return then && then(); const from = row.slot.open, t0 = M.now(); const iv = setInterval(() => { const k = Math.min(1, (M.now() - t0) / ms); if (!row.slot) { clearInterval(iv); return; } row.slot.open = from + (to - from) * (1 - Math.pow(1 - k, 3)); if (k >= 1) { clearInterval(iv); then && then(); } }, 16); }
-      function closeSlot(ms = 200) { if (!slotRow) return; const r = slotRow; if (S.sel === S.rows.indexOf(r)) S.sel = prevSel; animateOpen(0, ms, () => { const i = S.rows.indexOf(r); if (i >= 0) S.rows.splice(i, 1); if (S.sel >= S.rows.length) S.sel = S.rows.length - 1; }); slotRow = null; if (beam) { M.endBeam(beam); beam = null; } }
+      function closeSlot(ms = 200) { if (!slotRow) return; const r = slotRow; if (S.sel === S.rows.indexOf(r)) S.sel = prevSel; animateOpen(0, ms, () => { const i = S.rows.indexOf(r); if (i >= 0) S.rows.splice(i, 1); if (S.sel >= S.rows.length) S.sel = S.rows.length - 1; }); slotRow = null; }
       function landAsRow(sc, then) {
         // the slot becomes an ordinary row: pressed, then performed; the menu stays open long enough to read it
         const r = slotRow; r.slot.state = 'pressed'; r.slot.pressedAt = M.now(); S.confirm = null;
@@ -166,19 +165,17 @@
         S.talk = 'listening';
         animateOpen(1, 220);
         M.tone(880, 0.05, { vol: 0.02, to: 1320 });
-        beam = M.beam(() => ({ x: M.MIC.x, y: M.MIC.y - M.MIC.r * 0.4 }), slotCenter, false);
       };
       M.hooks.onMicUp = () => {
         if (!slotRow || S.talk !== 'listening') return;
         const sc = SLOT.scenarios[scn]; const s = slotRow.slot; S.talk = 'finalizing';
-        if (beam) beam.thin = true;
+        s.gotAt = M.now();   // no beam (Josh, 21:38 JST): the slot itself flashes once to say the speech went through
         if (!sc.heard) { M.after(350, () => { s.state = 'nothing'; S.talk = 'idle'; M.tone(300, 0.1, { type: 'triangle', vol: 0.02 }); M.after(900, () => closeSlot()); }, 'slot'); return; }
         // the words fill the slot (18 ms per char, 400 ms cap), then the judge
         s.state = 'filling'; const per = Math.min(18, 400 / sc.heard.length); const t0 = M.now();
         typer = setInterval(() => { s.typed = Math.min(sc.heard.length, (M.now() - t0) / per); if (s.typed >= sc.heard.length) { clearInterval(typer); s.state = 'judging'; s.slowSince = M.now(); S.talk = 'idle'; } }, 16);
         M.after(Math.min(400, per * sc.heard.length) + sc.judge, () => {
           if (!slotRow) return;
-          if (beam) { M.endBeam(beam, 300); beam = null; }
           if (sc.reason) { s.state = 'reason'; s.reason = sc.reason; M.feed(sc.reason, 'reason'); M.tone(240, 0.25, { type: 'square', vol: 0.03 }); M.shake(3, 150); S.sel = slotIndex(); S.confirm = { at: M.now(), label: 'nothing happens' }; return; }
           if (sc.say) { s.state = 'said'; M.tone(700, 0.08, { vol: 0.03, to: 1100 }); M.after(700, () => { M.feed('ADVENTURER: ' + sc.say, 'player'); closeSlot(); M.after(400, () => leaveAct()); roomAnswers('Nuaz', [{ text: 'NUAZ: ...Thank you?', col: C.nuaz }]); }); return; }
           if (sc.dup !== undefined) { s.state = 'landed'; s.label = sc.label; s.landedAt = M.now(); M.after(380, () => { closeSlot(180); S.sel = sc.dup; performRow(sc.dup, sc.line); }); return; }

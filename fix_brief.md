@@ -31,20 +31,18 @@ disagree, the disagreement is stated and the recommendation is marked; Josh deci
 
 ## B. What this proposal changes or adds, by impact
 
-### B1. The ray should run from the mic into the slot (highest visual impact, cheap)
+### B1. No beam from the mic to the slot (removed per Josh, 21:38 JST)
 
-- **Now:** `action_ui.rb` `slot_beams` draws rays standing *inside* the slot. The connection between the thing the
-  thumb is holding and the place the words will land is not drawn.
-- **Proposal:** one beam from the top of the mic to the slot's centre (two `sprites/beam.png` at angle, widths 26
-  and 9 px, `blendmode_enum: 2`, alpha 0.55/0.6, width and offset modulated by two sines), plus 4–8 `✦`/`·` labels
-  drifting along it; it thins to 35 % on release and fades 300 ms after the judge answers. Keep fix10's in-slot
-  sheen as the beam's landing glow.
-- **Where:** `action_ui.rb` new `mic_ray(from, to, level, thin)` called from `draw_slot10` for phases `:listening
-  :sending :judging`; `layout.rb` `mic_at` for the origin; the slot's rect from `menu_geo`.
-- **Budget:** two sprites + ≤8 labels per frame. If `perf_test.py --throttle 6` drops under 30 fps, draw the ray into
-  the existing koma-style render target at half size.
-- **Verify on a phone:** hold the violet mic with the menu open; the ray must appear within one frame, breathe
-  with your voice, thin on release, and be gone 300 ms after the label lands.
+- **Josh:** "i also don't want the 'line' or 'beam' from action mic to slot." The earlier mic-to-slot ray proposal is
+  withdrawn: do **not** add a mic-to-slot beam, line or particle trail.
+- **Now:** `action_ui.rb` `slot_beams` draws rays standing *inside* the slot (not a mic-to-slot line).
+- **Proposal:** keep the "speech went through" signal on the slot itself: on mic up (`:listening` → `:sending`),
+  one soft flash of the slot's own fill and frame (violet, alpha fading over ~380 ms / 23 ticks), then the words type
+  in. The marching dashed border during `:listening` and the underline during `:judging` stay. If fix10's in-slot
+  `slot_beams` read as a beam on the phone, tone them down to that flash; Josh decides.
+- **Where:** `action_ui.rb` `draw_slot10` (a `flash_at` tick on the slot set in `player.rb` when the take finalizes).
+- **Verify on a phone:** hold the violet mic with the menu open. Nothing should connect the mic and the slot. On
+  release the slot flashes once, then the words type in.
 
 ### B2. The gate: rewrites and doubt wait; only confident, unchanged, harmless acts go by themselves
 
@@ -109,7 +107,7 @@ disagree, the disagreement is stated and the recommendation is marked; Josh deci
   (`tools/synth_fx.py`: 1800→600 Hz, 250 ms). Then the △ line at +520 ms, the menu leaves at +900 ms (+1100 for a
   slot, so the new row is seen).
 - **Where:** `player.rb` `confirm_choice`, `confirm_slot`, `run_confirmed`, `@pressed[:ticks]`; `action_ui.rb`
-  `press_fx`, `dot_ring`; `stage.rb` `time_scale` (a UI-only variant: freeze `@pressed`/slot/ray timers, not
+  `press_fx`, `dot_ring`; `stage.rb` `time_scale` (a UI-only variant: freeze `@pressed`/slot timers, not
   `@presets`); `audio.rb` + `tools/synth_fx.py` for the tick.
 - **Verify:** a ✓ feels like a hit (the menu freezes for a beat); the map keeps breathing underneath.
 
@@ -148,8 +146,8 @@ fine); menu stays 400 ms after a pick, 1100 ms after a slot press.
   [n - MENU_MAX, 0].max`) and treat the slot as selected; on ✕, restore the previous `@sel`. In `draw_slot10`,
   drop the `s[:rewritten] && s[:heard]` subline. Instead, churn from the heard words into the label (the same
   `churn_text` motion, seeded with `s[:heard]` rather than blanks), for rewrites and kept labels alike. Append the
-  learned verb at the end of `@actions` so it stays at the bottom once performed. Keep the ray (B1) and the feed's
-  rewrite line.
+  learned verb at the end of `@actions` so it stays at the bottom once performed. Keep the feed's rewrite line. (The
+  mic-to-slot ray is gone; see B1.)
 - **Verify:** with a long menu scrolled to the top, hold the mic: the slot opens below the last row and the
   selection jumps to it. Say "fly over to her": the words morph into "Attempt to fly" with no grey line left. ✓:
   "Attempt to fly" is the last row.
@@ -174,7 +172,7 @@ Use `tools/phone_test.py` with `--mic-wav` for real Soniox takes and `--init-js`
    the stick settles and the rows below move with it; hold-repeat 500/200 ms; ✓ performs with the beat; tapping the
    selected row again performs; ✕ and ACT leave.
 6. **Slot: ok** ("tap her on the shoulder"). Expect: slot opens 220 ms at the very bottom of the menu with the
-   selection on it, the ray from the mic, words typed on release, the words morph into the label, performs by itself within 320 ms, the new row stays visible 1.1 s with a violet dot,
+   selection on it, no beam from the mic, a single soft slot flash and words typed on release, the words morph into the label, performs by itself within 320 ms, the new row stays visible 1.1 s with a violet dot,
    `ev: inspire` shows `gate: false`.
 7. **Slot: rewrite** ("fly over to her"). Expect: the words morph straight into "Attempt to fly" (no struck-through
    or grey original left in the slot), the strip with
@@ -184,8 +182,8 @@ Use `tools/phone_test.py` with `--mic-wav` for real Soniox takes and `--init-js`
 9. **Slot: reason** ("set my rose on fire"). Expect: red slot with the sentence, the feed copy, "hold the mic to try
    again"; a second press reuses the slot.
 10. **Slot: slow judge** (`--throttle 0.5,2000`). Expect: the words under the sweeping underline, "judging…" after
-    2 s, the thread-ray still drawn, fail-open at 5 s with "as said" and the gate if hostile.
+    2 s, no beam, fail-open at 5 s with "as said" and the gate if hostile.
 11. **Say** ("tell her she's beautiful"). Expect: "said ↓" for 700 ms, the words become `ADVENTURER:` in the feed,
     Act mode leaves 400 ms later.
-12. **FPS.** `perf_test.py --throttle 1,4,6` with the ray on screen; ≥ 30 fps at 6×.
+12. **FPS.** `perf_test.py --throttle 1,4,6` with a slot open and judging; ≥ 30 fps at 6×.
 13. **Korean world** (루이 뉘똥 샾): every caption and slot text in Korean; the churn never scrambles syllables.

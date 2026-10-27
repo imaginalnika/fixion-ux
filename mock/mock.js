@@ -1,7 +1,7 @@
 /* Fixion / DRDR mobile UX mockups: shared engine.
  * A 720x1280 logical canvas (the game's portrait grid) drawn into a 390x844 CSS box, both skins (color / ascii),
  * touch and mouse. Flows (talk, menu, slot) live in flows.js and drive this engine through MOCK.* and the
- * input hooks. Everything is plain Canvas 2D; the "beam" is additive gradient sprites, as it would be in DragonRuby. */
+ * input hooks. Everything is plain Canvas 2D. There is no mic-to-slot beam (removed per Josh, 21:38 JST). */
 (() => {
   'use strict';
   const W = 720, H = 1558, CELL = 42, COLS = 15, ROWS = 16, MAPX = 45, HEADER_Y = 88, MAPTOP = HEADER_Y + 64 + 92;
@@ -99,7 +99,7 @@
     pressed: null,           // { row, at }
     hint: ''
   };
-  const FX = { beams: [], parts: [], flashAt: -9, flashA: 0, shake: 0, shakeUntil: 0, rings: [], churn: [], bars: [] };
+  const FX = { parts: [], flashAt: -9, flashA: 0, shake: 0, shakeUntil: 0, rings: [], churn: [], bars: [] };
   const hooks = { onMicDown: null, onMicUp: null, onActTap: null, onConfirm: null, onCancel: null, onRowTap: null, onStick: null };
 
   // ------------------------------------------------------------------ audio (tiny, optional)
@@ -141,22 +141,6 @@
   }
   function hexA(hex, a) { const n = parseInt(hex.slice(1), 16); return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`; }
   function outlined(x, y, s, px, col, weight = 800) { font(px, weight); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round'; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(6,8,12,0.85)'; ctx.strokeText(s, x, y); ctx.fillStyle = col; ctx.fillText(s, x, y); }
-
-  // beam.png stand-in: a stretched additive gradient from (x1,y1) to (x2,y2), width w, with a fluid wobble
-  function beam(x1, y1, x2, y2, w, col, alpha, t) {
-    const dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy), ang = Math.atan2(dy, dx);
-    ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.translate(x1, y1); ctx.rotate(ang);
-    const segs = 14;
-    for (let i = 0; i < segs; i++) {
-      const u0 = i / segs, u1 = (i + 1) / segs, um = (u0 + u1) / 2;
-      const wob = 1 + 0.28 * Math.sin(t * 0.009 + um * 9) + 0.14 * Math.sin(t * 0.017 - um * 21);
-      const off = 6 * Math.sin(t * 0.006 + um * 7);
-      const ww = w * wob * (0.55 + 0.45 * Math.sin(um * Math.PI));
-      const g = ctx.createLinearGradient(0, -ww, 0, ww); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(0.5, col); g.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.globalAlpha = alpha; ctx.fillStyle = g; ctx.fillRect(u0 * len, off - ww, (u1 - u0) * len + 1, ww * 2);
-    }
-    ctx.restore();
-  }
 
   // ------------------------------------------------------------------ churn (글자들): letters settle through random glyphs
   const CHURN = '@#%&*+=~?$!/\\|<>^';
@@ -364,11 +348,12 @@
     rrect(row.x, row.y + 2, row.w, row.h - 4, 6, st === 'reason' ? 'rgba(60,12,18,0.9)' : st === 'landed' || st === 'pressed' ? '#163a34' : 'rgba(40,26,70,0.85)', 0.96, hexA(col, st === 'listening' || st === 'judging' ? 0.9 : 0.5), 1.5);
     if (st === 'listening' || st === 'judging') { ctx.setLineDash([6, 5]); ctx.lineDashOffset = -now * 0.03; rrect(row.x, row.y + 2, row.w, row.h - 4, 6, null, 0.9, hexA(col, 0.9), 1.5); ctx.setLineDash([]); }
     if (s.pressedAt && now - s.pressedAt < 420) rrect(row.x, row.y + 2, row.w, row.h - 4, 6, `rgba(255,255,255,${0.6 * (1 - (now - s.pressedAt) / 420)})`);
+    // the 'speech went through' signal without a beam: one soft violet flash of the slot itself when the words arrive
+    if (s.gotAt && now - s.gotAt < 380) { const f = 1 - (now - s.gotAt) / 380; rrect(row.x, row.y + 2, row.w, row.h - 4, 6, `rgba(190,160,255,${0.22 * f})`, 1, `rgba(210,190,255,${0.8 * f})`, 2); }
     ctx.fillStyle = col; ctx.fillRect(row.x, row.y + 7, 4, row.h - 14);
     const lx = row.x + 16;
     if (st === 'listening') {
       text(lx, mid, '…', row.fs, hexA(C.violet, 0.9));
-      // the ray ends here: sparks drift up out of the slot
     } else if (st === 'filling' || st === 'judging') {
       const shown = s.heard.slice(0, Math.floor(s.typed));
       text(lx, mid, shown + (st === 'filling' && Math.floor(now / 300) % 2 ? '_' : ''), row.fs, '#e6dcff');
@@ -512,16 +497,6 @@
 
   // ------------------------------------------------------------------ fx
   function drawFx() {
-    for (let i = FX.beams.length - 1; i >= 0; i--) {
-      const b = FX.beams[i]; const age = now - b.at; const life = b.until ? b.until - b.at : 1e9;
-      const k = b.until ? clamp(1 - (now - b.until + 220) / 220, 0, 1) : 1;
-      if (b.until && now > b.until) { FX.beams.splice(i, 1); continue; }
-      const from = b.from(), to = b.to(); const thin = b.thin ? 0.35 : 1;
-      beam(from.x, from.y, to.x, to.y, 26 * thin, 'rgba(150,110,255,0.55)', 0.55 * k * clamp(age / 160, 0, 1), now);
-      beam(from.x, from.y, to.x, to.y, 9 * thin, 'rgba(255,230,150,0.9)', 0.6 * k * clamp(age / 160, 0, 1), now * 1.3 + 400);
-      // particles drifting along the ray
-      if (!b.thin && Math.random() < 0.35) FX.parts.push({ x: from.x + (Math.random() - 0.5) * 30, y: from.y, tx: to.x, ty: to.y, at: now, life: 500 + Math.random() * 400, ch: Math.random() < 0.5 ? '✦' : '·', col: Math.random() < 0.5 ? C.gold : C.violet });
-    }
     ctx.save(); ctx.globalCompositeOperation = 'lighter';
     for (let i = FX.parts.length - 1; i >= 0; i--) {
       const p = FX.parts[i]; const k = (now - p.at) / p.life; if (k >= 1) { FX.parts.splice(i, 1); continue; }
@@ -608,8 +583,6 @@
     now: () => now, skin: () => skin, setSkin: (s) => { skin = s; },
     feed(text, who, extra) { S.feed.push(Object.assign({ text, who, at: now }, extra || {})); while (S.feed.length > 20) S.feed.shift(); },
     caption(t, col) { S.captionText = t; S.captionAt = now; S.captionCol = col || C.muted; },
-    reset() { cancelTimers(); S.talk = 'idle'; S.take = null; S.feed.length = 0; S.actMode = false; S.target = null; S.rows = []; S.sel = 0; S.confirm = null; S.pressed = null; S.responder = null; S.thinkingAt = 0; S.captionText = null; S.hint = ''; FX.beams.length = 0; FX.parts.length = 0; FX.rings.length = 0; FX.flashA = 0; hitstopUntil = 0; },
-    beam(from, to, thin) { const b = { from, to, at: now, thin }; FX.beams.push(b); return b; },
-    endBeam(b, ms = 220) { b.until = now + ms; }
+    reset() { cancelTimers(); S.talk = 'idle'; S.take = null; S.feed.length = 0; S.actMode = false; S.target = null; S.rows = []; S.sel = 0; S.confirm = null; S.pressed = null; S.responder = null; S.thinkingAt = 0; S.captionText = null; S.hint = ''; FX.parts.length = 0; FX.rings.length = 0; FX.flashA = 0; hitstopUntil = 0; },
   };
 })();

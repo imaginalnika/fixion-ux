@@ -45,6 +45,11 @@
   .clip video { width: 100%; border-radius: 6px; background: #000; display: block; }
   .clip b { color: #6fe2c7; } .clip small { color: #a8b4ba; display: block; margin-top: 4px; line-height: 1.45; }
   .clip code { font-size: 11px; }
+  .clips { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+  .clip { background: #111820; border: 1px solid #1e2a30; border-radius: 10px; padding: 8px; }
+  .clip video { width: 100%; border-radius: 6px; background: #000; display: block; }
+  .clip b { color: #6fe2c7; } .clip small { color: #a8b4ba; display: block; margin-top: 4px; line-height: 1.45; }
+  .clip code { font-size: 11px; }
 </style>
 </head>
 <body>
@@ -52,7 +57,7 @@
   <nav class="mock">
     <a href="mock/talk.html"><b>Mockup A · talk flow</b>green bars over the @, the take card, failures</a>
     <a href="mock/menu.html"><b>Mockup B · action menu</b>stick up/down, ✕/✓ strip, raised ACT, the commit</a>
-    <a href="mock/slot.html"><b>Mockup C · mic to action</b>the slot, the ray, the morph, the gate</a>
+    <a href="mock/slot.html"><b>Mockup C · mic to action</b>the bottom slot, the morph, the gate (no beam)</a>
     <a href="index.html#clips"><b>Clips</b>14 recorded runs of the mockups, A1–C8</a>
     <a href="fix_brief.html"><b>Implementation brief</b>for the round after fix10, by file and function</a>
   </nav>
@@ -79,6 +84,13 @@ beside the target) and whether a rewrite may auto-confirm (fix10: after a delay;
 </blockquote>
 <h3 id="changelog">Changelog</h3>
 <ul>
+<li><p><strong>21:38 JST, Josh:</strong> &quot;i also don&#39;t want the &#39;line&#39; or &#39;beam&#39; from action mic to slot.&quot; The mic-to-slot ray is
+<strong>removed</strong> everywhere: no beam, no thread, no glyph motes between the mic and the slot. Everything else in the slot
+flow stays: it opens at the very bottom, the words type in, morph into the label, and press (or wait for ✓). So the
+&quot;speech went through&quot; signal is not lost, the slot itself flashes once, softly (a 380 ms violet brightening of its
+own border and fill), as the heard words arrive. Changed: §0 row 9, §2c, §3a, §3b steps 1–5, §4, §5, §6, the slot
+mockup and the C clips.</p>
+</li>
 <li><p><strong>18:45 JST, Josh on the published proposal:</strong> &quot;make the inspire action at the very bottom. also no need to maintain
 the line&quot;. Read as:</p>
 <ol>
@@ -87,7 +99,7 @@ under the selected row. The selection jumps to the slot while speaking. After it
 at the bottom. ✕ while the slot is open puts the selection back on the row it was on.</li>
 <li><strong>No struck-through original.</strong> The heard words morph straight into the judged label, rewrite or not, and no
 strikethrough line is kept in the slot. A gated rewrite still asks &quot;do this instead?&quot; on the strip, without the
-original line. The light ray from the mic to the slot stays: it is a VFX, not the line.</li>
+original line. (The light ray from the mic to the slot was kept at 18:45 as a VFX; removed at 21:38, above.)</li>
 </ol>
 <p>Changed: §0 rows 9–10, §3a, §3b steps 1, 5 and 7, §4 (slot open, morph; the struck-subline row is removed), §5,
 §8 (P5), the slot mockup and the C clips. Unchanged and open for Josh: the feed&#39;s existing struck-through rewrite
@@ -146,7 +158,7 @@ line at the perform step (fix3 behaviour, part of the transcript, not the slot).
 </tr>
 <tr>
 <td>9</td>
-<td>Pressing the mic in the menu slides a <strong>slot</strong> open at the <strong>very bottom of the menu</strong>, below every row, and the selection jumps to it (220 ms); a light ray runs from the mic into the slot while speaking; on release the heard words type in (≤400 ms); the judge runs under a thin ray.</td>
+<td>Pressing the mic in the menu slides a <strong>slot</strong> open at the <strong>very bottom of the menu</strong>, below every row, and the selection jumps to it (220 ms); while speaking the slot&#39;s dashed border marches (no beam from the mic); on release the slot flashes once and the heard words type in (≤400 ms); the judge runs under a sweeping underline.</td>
 <td>Josh&#39;s ask; P1 the screenplay is the world</td>
 </tr>
 <tr>
@@ -279,7 +291,7 @@ other row selects it and moves the strip.</li>
 </tr>
 <tr>
 <td>0–90</td>
-<td><strong>hitstop</strong>: the menu, the ray and the deck freeze for 90 ms (the map keeps breathing)</td>
+<td><strong>hitstop</strong>: the menu and the deck freeze for 90 ms (the map keeps breathing)</td>
 </tr>
 <tr>
 <td>0</td>
@@ -303,9 +315,9 @@ read even under a thumb.</p>
 <h3 id="3a-states">3a. States</h3>
 <pre class="mermaid">stateDiagram-v2
   [*] --&gt; menu_idle: Act mode, a target, a selected row
-  menu_idle --&gt; slot_open: mic down (slot slides open at the bottom of the menu, selection jumps to it, 220 ms#59; ray from mic to slot)
+  menu_idle --&gt; slot_open: mic down (slot slides open at the bottom of the menu, selection jumps to it, 220 ms#59; no beam)
   slot_open --&gt; slot_listening: audio flowing (same arming rule as talk)
-  slot_listening --&gt; slot_filling: mic up (ray thins#59; heard words type into the slot, ≤ 400 ms)
+  slot_listening --&gt; slot_filling: mic up (the slot flashes once#59; heard words type into the slot, ≤ 400 ms)
   slot_filling --&gt; slot_judging: words complete (underline sweeps#59; "judging…" after 2 s)
   slot_judging --&gt; landed_auto: ok or duplicate, P ≥ 0.75, not hostile
   slot_judging --&gt; landed_gated: rewrite, or P &lt; 0.75, or hostile preset
@@ -325,19 +337,19 @@ read even under a thumb.</p>
   slot_judging --&gt; closed: ✕ while judging (the sidecar's answer is discarded)</pre><h3 id="3b-beat-by-beat">3b. Beat by beat</h3>
 <ol>
 <li><strong>Mic down (violet, in Act mode).</strong> A new row slides open at the very bottom of the menu, below every row:
-0→46 px in 220 ms, ease-out, and the selection jumps to it. The slot is violet-tinted with a dashed border that marches. From the top of the
-mic a <strong>ray</strong> rises into the slot: a 26 px additive violet beam with a 9 px warm core, both wobbling in width and
-offset with two slow sines (&quot;fluid&quot;), and <code>✦</code>/<code>·</code> glyph motes drifting up the ray and dying in the slot. The mic&#39;s
-ten orbiting sparks run as today. Over the <code>@</code> nothing (an action is not speech).</li>
-<li><strong>Speaking.</strong> Nothing is written. The slot shows &quot;…&quot;. The ray breathes with the mic level.</li>
-<li><strong>Mic up.</strong> The ray thins to a thread (35 % width). The heard words <strong>type into the slot</strong>, 18 ms per character,
+0→46 px in 220 ms, ease-out, and the selection jumps to it. The slot is violet-tinted with a dashed border that marches.
+There is <strong>no beam or line from the mic to the slot</strong> (removed per Josh, 21:38 JST). The mic&#39;s ten orbiting sparks
+run as today. Over the <code>@</code> nothing (an action is not speech).</li>
+<li><strong>Speaking.</strong> Nothing is written. The slot shows &quot;…&quot; and its dashed border marches.</li>
+<li><strong>Mic up.</strong> The slot <strong>flashes once</strong>, softly (its border and fill brighten violet and fade over 380 ms): the
+speech went through. The heard words <strong>type into the slot</strong>, 18 ms per character,
 capped at 400 ms for long phrases, with a blinking <code>_</code>. This is the one place the player reads what was heard
 before anything happens, and it answers F1.</li>
-<li><strong>Judging.</strong> A violet underline sweeps under the words (900 ms loop). The thread stays. After 2 s of waiting a
+<li><strong>Judging.</strong> A violet underline sweeps under the words (900 ms loop). After 2 s of waiting a
 small &quot;judging…&quot; appears at the right of the slot; this covers the 2–5 s slow-network case without changing
 state. At 5 s the sidecar fails open: the words become the label with an &quot;as said&quot; tag and, if the preset is
 hostile, the gate still applies.</li>
-<li><strong>Landed.</strong> The ray ends with a 300 ms fade. The label arrives in the slot:<ul>
+<li><strong>Landed.</strong> The label arrives in the slot:<ul>
 <li>Kept (<code>ok</code>) or rewritten, the same motion: the heard words <strong>morph straight into the label</strong> with a 320 ms
 left-to-right <strong>churn</strong> (each heard letter turns into <code>@#%&amp;*</code> glyphs and settles as the label&#39;s letter, the
 fix8 banner&#39;s motion) and a rising tone. No struck-through line is kept in the slot. A rewrite is gated (step
@@ -448,7 +460,7 @@ line. Making it final would send the player back through ACT → aim → mic for
 <tr>
 <td>commit: hitstop</td>
 <td>90</td>
-<td>menu, ray, deck only</td>
+<td>menu, deck only</td>
 </tr>
 <tr>
 <td>commit: ring / sparks / flash</td>
@@ -469,6 +481,11 @@ line. Making it final would send the player back through ACT → aim → mic for
 <td>mic down → slot open</td>
 <td>220</td>
 <td>ease-out; at the very bottom of the menu, the selection jumps to it</td>
+</tr>
+<tr>
+<td>mic up → slot flash</td>
+<td>380</td>
+<td>soft violet border/fill brighten, fades; no beam</td>
 </tr>
 <tr>
 <td>mic up → words typed</td>
@@ -515,11 +532,6 @@ line. Making it final would send the player back through ACT → aim → mic for
 <td>700</td>
 <td>Act mode leaves +400</td>
 </tr>
-<tr>
-<td>ray fade after judge</td>
-<td>300</td>
-<td></td>
-</tr>
 </tbody></table>
 <hr>
 <h2 id="5-edge-cases">5. Edge cases</h2>
@@ -527,7 +539,7 @@ line. Making it final would send the player back through ACT → aim → mic for
 <li><strong>Empty STT (talk).</strong> &quot;didn&#39;t catch that&quot; card, <code>?</code> over the <code>@</code>, caption; nothing is sent. Distinguished from
 system failure by whether the stream ever started (the audit&#39;s <code>streamStarted</code> test).</li>
 <li><strong>Empty STT (slot).</strong> The slot says &quot;didn&#39;t catch that&quot; for 900 ms and closes; the selection and strip return.</li>
-<li><strong>Cancel mid-speech (slot).</strong> ✕ or stick-left while listening: the ray ends, the slot closes, the socket&#39;s take is
+<li><strong>Cancel mid-speech (slot).</strong> ✕ or stick-left while listening: the slot closes, the socket&#39;s take is
 discarded (the bridge still finalizes the socket to stop billing, but the text is dropped).</li>
 <li><strong>Cancel while judging.</strong> Same; the sidecar&#39;s answer is ignored by id. Needs an <code>inspire_id</code> on the request and the
 game to ignore late answers (<code>Player#inspired</code> already checks <code>@inspiring</code>).</li>
@@ -538,8 +550,7 @@ slot judging cancels it.</li>
 with the heard words morphing into the rewrite. The <code>impossible</code> rewrite is the comedy case (&quot;Attempt to fly&quot;); it is shown before
 it is performed so the joke is shared, not discovered.</li>
 <li><strong>Slow network 2–5 s.</strong> The words stay in the slot under the sweeping underline; &quot;judging…&quot; after 2 s; at 5 s fail
-open to the words as said, still gated if hostile. The thread-ray stays so the connection between mic and slot
-reads through the wait. Nothing else on screen moves.</li>
+open to the words as said, still gated if hostile. The marching border and the underline carry the wait. Nothing else on screen moves.</li>
 <li><strong>The sidecar is down.</strong> As said, &quot;as said&quot; tag, no gate unless hostile (then ✓ is required, and the sidecar&#39;s
 absence means it performs locally and queues the facts).</li>
 <li><strong>Two takes in a row (talk).</strong> A press while the previous card is lifting: the lift finishes, the new press arms.</li>
@@ -552,11 +563,9 @@ the churn uses Hangul-safe glyphs (<code>@#%&amp;*</code> are fine; no syllable 
 <hr>
 <h2 id="6-vfx-within-the-html5-budget">6. VFX, within the HTML5 budget</h2>
 <ul>
-<li><strong>Ray.</strong> Two stretched <code>beam.png</code> sprites (the game ships one) with <code>blendmode_enum: 2</code>, angle from the mic to
-the slot, widths 26 and 9 px, alpha 0.55 and 0.6, width and offset modulated per frame by two sines, plus 4–8
-<code>✦</code>/<code>·</code> labels drifting along it. Cost: two sprites and a handful of labels per frame. On DPR-capped phones this is
-nothing like the full-screen layers fix1 removed. Draw it into the existing <code>:drdr_koma</code>-style render target at
-half resolution only if profiling shows a cost; the mockup draws it directly.</li>
+<li><strong>No mic-to-slot beam</strong> (removed per Josh, 21:38 JST). The only &quot;speech went through&quot; effect is the slot&#39;s own
+one-shot flash: a filled rect and a 2 px frame on the slot, alpha fading over 380 ms. No extra sprites, no render
+target.</li>
 <li><strong>Churn.</strong> The fix8 join banner&#39;s glyph churn (<code>skin_fx.rb</code>), applied to one label.</li>
 <li><strong>Hitstop.</strong> <code>Stage#time_scale</code> already exists (0.35 for 42 ticks on a big moment). A menu hitstop is a 5-tick full
 stop applied to the UI layer only; the map&#39;s ambient animation keeps running so it reads as impact, not a hang.</li>
@@ -624,8 +633,8 @@ on a week of live <code>ev: inspire</code> records.</li>
   <div class="clip"><video src="media/a-talk-empty-and-notready.mp4" controls muted playsinline loop preload="metadata"></video><b>A4</b> <code>a-talk-empty-and-notready.mp4</code><small><b>What to watch:</b> Two failure looks: an empty take (grey "didn't catch that" plus the ? over the @), then a release while still arming (amber "let go · hold again", no finalize).</small></div>
   <div class="clip"><video src="media/b-menu-select-confirm.mp4" controls muted playsinline loop preload="metadata"></video><b>B1</b> <code>b-menu-select-confirm.mp4</code><small><b>What to watch:</b> The stick moves the selection up and down only; the ✕/✓ strip opens under the selected row; ✓ gives the commit beat (white wash, hitstop, glyph ring, sparks) before the menu leaves.</small></div>
   <div class="clip"><video src="media/b-menu-cancel-then-confirm.mp4" controls muted playsinline loop preload="metadata"></video><b>B2</b> <code>b-menu-cancel-then-confirm.mp4</code><small><b>What to watch:</b> ✕ closes the menu and leaves Act mode; the menu is reopened and a pick is confirmed with ✓.</small></div>
-  <div class="clip"><video src="media/c-slot-ok-auto.mp4" controls muted playsinline loop preload="metadata"></video><b>C1</b> <code>c-slot-ok-auto.mp4</code><small><b>What to watch:</b> Mic in the menu: a slot slides open at the very bottom of the menu and the selection jumps to it, the violet ray runs into it, "tap her on the shoulder" types in, the words morph straight into "Tap shoulder", and it is pressed by itself (no gate). It becomes a row with a violet dot while the menu stays.</small></div>
-  <div class="clip"><video src="media/c-slot-ok-ascii.mp4" controls muted playsinline loop preload="metadata"></video><b>C2</b> <code>c-slot-ok-ascii.mp4</code><small><b>What to watch:</b> The same spoken action in the ASCII skin: the slot, ray, churn and auto-press.</small></div>
+  <div class="clip"><video src="media/c-slot-ok-auto.mp4" controls muted playsinline loop preload="metadata"></video><b>C1</b> <code>c-slot-ok-auto.mp4</code><small><b>What to watch:</b> Mic in the menu: a slot slides open at the very bottom of the menu and the selection jumps to it (no beam from the mic), the slot flashes once as "tap her on the shoulder" types in, the words morph straight into "Tap shoulder", and it is pressed by itself (no gate). It becomes a row with a violet dot while the menu stays.</small></div>
+  <div class="clip"><video src="media/c-slot-ok-ascii.mp4" controls muted playsinline loop preload="metadata"></video><b>C2</b> <code>c-slot-ok-ascii.mp4</code><small><b>What to watch:</b> The same spoken action in the ASCII skin: the bottom slot, the one-shot flash, the morph and auto-press, with no beam.</small></div>
   <div class="clip"><video src="media/c-slot-rewrite-gated.mp4" controls muted playsinline loop preload="metadata"></video><b>C3</b> <code>c-slot-rewrite-gated.mp4</code><small><b>What to watch:</b> A rewrite at the bottom slot: "fly over to her" morphs straight into "Attempt to fly" with no struck-through line, and the strip asks "do this instead?". Nothing happens until ✓.</small></div>
   <div class="clip"><video src="media/c-slot-hostile-gated.mp4" controls muted playsinline loop preload="metadata"></video><b>C4</b> <code>c-slot-hostile-gated.mp4</code><small><b>What to watch:</b> A hostile act ("punch her in the jaw as hard as I can" → "Punch hard") morphs in place at the bottom slot and always waits for ✓, which is the gate rule that would have stopped the 양 hit.</small></div>
   <div class="clip"><video src="media/c-slot-duplicate.mp4" controls muted playsinline loop preload="metadata"></video><b>C5</b> <code>c-slot-duplicate.mp4</code><small><b>What to watch:</b> "wave at her" matches the existing Wave: the slot shows it briefly and collapses, and the existing row takes the press. No new row.</small></div>
