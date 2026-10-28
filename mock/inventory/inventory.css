@@ -1,0 +1,71 @@
+/* Inventory at the top: shared page chrome. The phones themselves are SVG drawn by inventory.js. */
+@font-face { font-family: "JetBrains Mono"; src: url("../../assets/fonts/jetbrainsmono-regular.ttf"); font-weight: 400; }
+@font-face { font-family: "JetBrains Mono"; src: url("../../assets/fonts/jetbrainsmono-bold.ttf"); font-weight: 700; }
+@font-face { font-family: "JetBrains Mono"; src: url("../../assets/fonts/jetbrainsmono-extrabold.ttf"); font-weight: 800; }
+@font-face { font-family: "Fixion KR"; src: url("../../assets/fonts/notosansmonocjkkr-regular.otf"); font-weight: 400; }
+@font-face { font-family: "Fixion KR"; src: url("../../assets/fonts/notosansmonocjkkr-bold.otf"); font-weight: 700 800; }
+
+html, body { margin: 0; background: #06080c; color: #c8dcd7; font: 13px/1.5 "JetBrains Mono", "Fixion KR", ui-monospace, monospace; }
+svg text { font-family: "JetBrains Mono", "Fixion KR", ui-monospace, monospace; }
+a { color: #6fe2c7; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+main { max-width: 1240px; margin: 0 auto; padding: 22px 22px 60px; }
+header.top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px; border-bottom: 1px solid #1a242a; padding-bottom: 12px; }
+header.top h1 { margin: 0; font-size: 20px; color: #faf8ef; font-weight: 700; }
+header.top h1 small { color: #8a949c; font-weight: 400; font-size: 13px; margin-left: 8px; }
+header.top nav { margin-left: auto; display: flex; gap: 10px; flex-wrap: wrap; }
+header.top nav a.on { color: #e6b05c; }
+p.line { color: #e6b05c; font-size: 14px; margin: 12px 0 6px; }
+
+table.model { border-collapse: collapse; margin: 10px 0 4px; font-size: 12px; }
+table.model th { text-align: left; color: #8a949c; font-weight: 400; padding: 3px 14px 3px 0; vertical-align: top; white-space: nowrap; }
+table.model td { padding: 3px 0; color: #c8dcd7; }
+
+.toggles { display: flex; gap: 16px; flex-wrap: wrap; margin: 16px 0 10px; }
+.toggles span { color: #8a949c; margin-right: 4px; }
+.toggles a { border: 1px solid #2a3a40; padding: 3px 9px; margin-right: 4px; color: #c8dcd7; }
+.toggles a.on { border-color: #6fe2c7; color: #6fe2c7; }
+
+h2 { font-size: 14px; color: #faf8ef; margin: 26px 0 10px; font-weight: 700; }
+h2 small { color: #8a949c; font-weight: 400; }
+
+.flow { display: grid; gap: 14px; }
+.flow.p { grid-template-columns: repeat(3, 1fr); }
+.flow.l { grid-template-columns: repeat(2, 1fr); }
+.frame { margin: 0; }
+.frame svg, .cell svg, .opt svg { display: block; width: 100%; height: auto; background: #090c12; outline: 1px solid #1a242a; }
+.frame figcaption { font-size: 11.5px; color: #a8b4b8; margin-top: 6px; }
+.frame figcaption b { color: #faf8ef; font-weight: 700; margin-right: 4px; }
+
+.matrix { display: grid; gap: 12px; grid-template-columns: repeat(4, 1fr); align-items: start; }
+.matrix.l { grid-template-columns: repeat(2, 1fr); }
+.cell .tag { font-size: 11px; color: #8a949c; margin-top: 4px; }
+
+.notes { font-size: 12px; color: #a8b4b8; max-width: 860px; }
+.notes li { margin: 3px 0; }
+
+/* comparison board */
+.board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px 20px; margin-top: 18px; }
+.opt { border: 1px solid #1a242a; padding: 12px; background: #080b10; }
+.opt h3 { margin: 0 0 4px; font-size: 15px; color: #faf8ef; }
+.opt h3 span { color: #8a949c; font-weight: 400; font-size: 12px; margin-left: 6px; }
+.opt p { margin: 0 0 10px; color: #e6b05c; font-size: 12px; min-height: 36px; }
+.opt .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.opt .pair div { font-size: 10.5px; color: #8a949c; margin-top: 3px; }
+.opt .how { font-size: 11px; color: #a8b4b8; margin-top: 8px; }
+.opt a.go { display: inline-block; margin-top: 8px; }
+
+/* one phone, nothing else: for screenshots */
+body.solo main { padding: 0; max-width: none; }
+body.solo svg { display: block; outline: none; }
+
+/* inventory additions */
+.opt .pair + .pair { margin-top: 8px; }
+.opt .pair a { display: block; }
+.spec { border: 1px solid #2a2a22; background: #0b0d0f; padding: 4px 16px 12px; margin-top: 22px; }
+.spec h2 { color: #e9dcbc; }
+.spec h3 { font-size: 12px; color: #e6b05c; margin: 12px 0 2px; font-weight: 700; }
+.spec p { margin: 2px 0; font-size: 12px; color: #c8dcd7; max-width: 1100px; }
+.spec table.model th { min-width: 190px; }
+svg text { white-space: pre; }
