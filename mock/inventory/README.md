@@ -32,6 +32,7 @@ Portrait w 720, `top = screen_top − 88` (header `top−64…top`, ⚙ `(676, t
 - Landscape first item **(w − 168, h − 26)**, r 18 → (1390, 694) at w 1558, (1112, 694) at w 1280. Next: `x = w − 168 − 46·i`.
 - Landscape first equipment **(max(map_x + 30, title_end + 40), h − 26)** → (469, 694) at w 1558. Next `+46·j`.
 - On land: slot debut = 6 dots spin in from 1.8 r, 8 ticks before arrival · land = glow.png additive, r 1.0→1.6, alpha 160→0 over 18 ticks · ASCII: brackets type in, contents churn `:` `.` glyph (3 ticks each).
+- Envelope (4th item, after card/key/coin; `optA-envelope-*.png`): lands **(508, top − 96)**, r 22 = `676 − 56·3`, left of the coin.
 
 ### B · The growing shelf
 - Portrait first item **(360, top − 96)**, r 22.
@@ -40,6 +41,7 @@ Portrait w 720, `top = screen_top − 88` (header `top−64…top`, ⚙ `(676, t
 - First equipment **(360, top − 96)**, hand ring r 28 (+ halo r 34); items part to `x = 360 ± (64 + 56·rank)`, item k even → right, odd → left, rank = ⌊k/2⌋. Items slide outward 10 ticks *before* the coat arrives, then the ring dots in. More equipment: ring widens to a capsule, pitch 52 centred on 360, items shift out 26 per extra piece. Cap 4 per side, then `+n`.
 - Landscape first item **(map_x + map_w/2, h − 26)**, r 18 → (739, 694) at w 1558, (600, 694) at w 1280. Next `x_i = cx + (i − (n−1)/2)·46`; with equipment, hand r 23 and items at `cx ± (53 + 46·rank)`; 5 per side, must stay > title_end + 20 and < ♪ hit box − 24.
 - On land: as A (glow swell + 6-dot ring).
+- Envelope (4th item, after card/key/coin; `optB-envelope-*.png`): lands **(444, top − 96)**, r 22 at the right end (`360 + 1.5·56`); the three items slide −28 to 276/332/388 during the flight, shelf widens.
 
 ### C · The slug line
 - Portrait line: baseline centre y = **top − 96**, left x = 24, font 24.
@@ -49,6 +51,7 @@ Portrait w 720, `top = screen_top − 88` (header `top−64…top`, ⚙ `(676, t
 - Landscape line: y = h − 26, left x = map_x (439 at w 1558), font 19 → first word centre **(519, 694)** at w 1558; must end < ♪ hit box − 24.
 - Measure words with `calcstringbox` in game; the mono estimate is for the mock.
 - On land: letters (one label per glyph) fly, staggered 3 ticks, same Bézier; each glyph churns 2 random glyphs → itself (2 ticks each), then the word glows parchment for 18 ticks.
+- Envelope (4th item, after card/key/coin; `optC-envelope-*.png`): letters 봉 투 land at word centre **(355, top − 96)** in `당신 (카드, 열쇠, 동전, 봉투)` (EN "envelope" → (398, top − 96)).
 
 ## DragonRuby capability risk
 

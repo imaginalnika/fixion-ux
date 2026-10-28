@@ -69,3 +69,5 @@ body.solo svg { display: block; outline: none; }
 .spec p { margin: 2px 0; font-size: 12px; color: #c8dcd7; max-width: 1100px; }
 .spec table.model th { min-width: 190px; }
 svg text { white-space: pre; }
+/* envelope pickup row on the board */
+.opt .pair.env { grid-template-columns: repeat(3, 1fr); }

@@ -2,12 +2,13 @@
  * Each phone is a static SVG in the game's logical units (portrait 720x1558 = 390x844 CSS; phone landscape
  * 1558x720 = 844x390), header / map / deck from drdr-dr layout.rb (read only). Six frames per option:
  *   0 empty · 1 first pickup in flight · 2 first slot landed · 3 several items · 4 equipment unlocked · 5 tray opened
- * Query: ?o=p|l &s=color|ascii &l=ko|en (&solo=1&f=0..5 draws one phone only, for screenshots). */
+ * Plus the envelope pickup (Fixion SFX/VFX letter clip): e0 start · e1 mid-flight · e2 landed, after frame 3's items.
+ * Query: ?o=p|l &s=color|ascii &l=ko|en (&solo=1&f=0..5|e0..e2 draws one phone only, for screenshots). */
 (() => {
   'use strict';
   const qs = new URLSearchParams(location.search);
   const Q = { o: qs.get('o') === 'l' ? 'l' : 'p', s: qs.get('s') === 'ascii' ? 'ascii' : 'color', l: qs.get('l') === 'en' ? 'en' : 'ko',
-              solo: qs.get('solo') === '1', f: Math.min(5, Math.max(0, +(qs.get('f') ?? 4))) };
+              solo: qs.get('solo') === '1', f: /^e[0-2]$/.test(qs.get('f')) ? qs.get('f') : Math.min(5, Math.max(0, +(qs.get('f') ?? 4))) };
 
   // ------------------------------------------------------------------ palette
   const C = { ink: '#090c12', deck: '#06080c', mint: '#6fe2c7', amber: '#e6b05c', amberHi: '#ffd696', amberRim: '#ffe6be',
@@ -44,6 +45,8 @@
                   3: [['npc', 'GEMMA: Isn\'t that my coin?'], ['delta', '△ You pocket the coin.', 1]],
                   4: [['npc', 'CLERK: It\'s raining. Take this.'], ['delta', '△ The clerk helps you into a coat.', 1]] } }
   };
+  for (const [lang, d] of [['ko', '△ 당신이 탁자 위의 봉투를 줍는다.'], ['en', '△ You pick the envelope up off the table.']])
+    TXT[lang].feed.e0 = TXT[lang].feed.e1 = TXT[lang].feed.e2 = [[TXT[lang].feed[0][0][0], TXT[lang].feed[0][0][1]], ['delta', d, 1]];
   TXT.ko.feed[2] = TXT.ko.feed[1]; TXT.en.feed[2] = TXT.en.feed[1]; TXT.ko.feed[5] = TXT.ko.feed[4]; TXT.en.feed[5] = TXT.en.feed[4];
 
   // the things (ASCII glyphs avoid the map's # . = T h & o b +)
@@ -51,6 +54,7 @@
     card: { ko: '카드', en: 'card', a: 'c', note: { ko: '점원의 명함', en: 'the clerk\'s card' } },
     key:  { ko: '열쇠', en: 'key', a: 'k', note: { ko: '녹슨 열쇠, 어디 것인지 모름', en: 'rusty, opens who knows what' } },
     coin: { ko: '동전', en: 'coin', a: '$', note: { ko: '젬마가 자기 거라던 500원', en: '500 won Gemma says is hers' } },
+    letter: { ko: '봉투', en: 'envelope', a: 'e', note: { ko: '밀랍으로 봉한 편지', en: 'a letter, wax-sealed' } },
     coat: { ko: '코트', en: 'coat', a: '[', note: { ko: '점원이 입혀 줌', en: 'the clerk put it on you' }, equip: true }
   };
   const CLAUSE = { ko: '코트 차림', en: 'in a coat' };   // option C's equipment clause
@@ -62,8 +66,14 @@
     2: { items: ['card'], equip: [], land: 'card' },
     3: { items: ['card', 'key', 'coin'], equip: [], land: 'coin', talk: true },
     4: { items: ['card', 'key', 'coin'], equip: ['coat'], land: 'coat', from: 'clerk' },
-    5: { items: ['card', 'key', 'coin'], equip: ['coat'], open: true }
+    5: { items: ['card', 'key', 'coin'], equip: ['coat'], open: true },
+    // the envelope pickup (r2_letter_color.mp4): it pops off a table one cell down-right of @, "+ 봉투" rises, then flies to the tray
+    e0: { items: ['card', 'key', 'coin'], equip: [], env: 'start' },
+    e1: { items: ['card', 'key', 'coin'], equip: [], env: 'mid', fly: 'letter' },
+    e2: { items: ['card', 'key', 'coin', 'letter'], equip: [], env: 'landed', land: 'letter' }
   };
+  const ENV_FRAMES = [{ id: 'e0', ko: '봉투 · 줍기', en: 'envelope · start' }, { id: 'e1', ko: '봉투 · 비행', en: 'envelope · mid-flight' }, { id: 'e2', ko: '봉투 · 착지', en: 'envelope · landed' }];
+  const ENV_LABEL = { ko: '+ 봉투', en: '+ envelope' };
   const FRAMES = [
     { id: 0, ko: '비어 있음', en: 'empty' }, { id: 1, ko: '첫 줍기 · 비행', en: 'first pickup · fly' }, { id: 2, ko: '첫 칸', en: 'first slot' },
     { id: 3, ko: '여러 개', en: 'several' }, { id: 4, ko: '장비 열림', en: 'equipment unlocked' }, { id: 5, ko: '펼치기', en: 'tapped open' }
@@ -79,6 +89,9 @@
              'Three items pack leftward. You speak: the green dot over the @ is untouched by the tray.',
              'The clerk dresses you: the coat flies from the clerk to the LEFT, opening the mint equipment pocket.',
              'Tap anywhere on the top strip: one card drops from the side you tapped, 장비 over 소지품.'],
+      env: ['The envelope pops off the table beside @; "+ 봉투" rises from it.',
+            'It arcs up-right to the item pocket; the 4th slot dots in left of the coin (x 676 − 56·3).',
+            'Landed: the envelope is the 4th disc of the right pocket, packing right → left.'],
       model: [['Items', 'right pocket, pack right → left from x 676 (under ⚙)'], ['Equipment', 'left pocket, pack left → right from x 44; appears on first equip'],
               ['Open', 'tap the tray strip → card drops down from that side; tap again / outside to fold'], ['Peek', 'long-press a slot → name tag'],
               ['Risk', 'two clusters read as a toolbar; equipment far from the items it relates to']] },
@@ -90,6 +103,9 @@
              'Stage 2 — three items: the row re-centres each time, and a hairline shelf appears under it.',
              'Stage 3 — equipment unlocked: items part like a curtain, a larger mint ring opens in the middle, the coat lands in it.',
              'Tap the shelf: it opens downward into a short card. 장비 first, then 소지품.'],
+      env: ['The envelope pops off the table beside @; "+ 봉투" rises from it.',
+            'It arcs to the right end of the shelf while the three items slide left to re-centre (−28 over the flight).',
+            'Landed: four slots centred on 360, the envelope at the right end; the shelf has widened under them.'],
       model: [['Items', 'centred row; new item takes the right end and the row re-centres (−28 px over the flight)'],
               ['Growth', '1 item: bare slot · 3+: hairline shelf · first equip: mint hand ring, items split alternately R/L'],
               ['Equipment', 'the centre ring ("in hand / on you"); more equipment widens it into a capsule'],
@@ -102,6 +118,9 @@
              'Three items: words append inside the parenthesis. Words are the slots; ASCII needs nothing extra.',
              'Dressed: the equipment clause types in after YOU, in your mint; the item list slides right to make room.',
              'Tap the line: it unfolds into a little screenplay block — cue, parenthetical, one prop per line.'],
+      env: ['The envelope pops off the table beside @; "+ 봉투" rises from it.',
+            'It breaks into its letters 봉 투; they stream up into the gap typed after ", " inside the parenthesis.',
+            'Landed: the word churns into place — 당신 (카드, 열쇠, 동전, 봉투).'],
       model: [['Items', 'words inside the parenthesis, appended left → right'], ['Equipment', 'a clause after YOU in mint ("in a coat", "holding an umbrella")'],
               ['Open', 'tap the line → screenplay block drops down; tap again / outside to fold'], ['Overflow', '(card, key +3)'],
               ['Risk', 'reads slower than icons; long KO lines need the 외 n cut early']] }
@@ -167,6 +186,13 @@
     const g = [];
     if (kind === 'card') { g.push(R(x - s * 0.55, y - s * 0.38, s * 1.1, s * 0.76, '#f6f2e6', { rx: 2 }), R(x - s * 0.55, y - s * 0.38, s * 1.1, s * 0.18, '#8a2a3a'), Ln(x - s * 0.38, y + s * 0.06, x + s * 0.3, y + s * 0.06, '#9a948a', 1.6), Ln(x - s * 0.38, y + s * 0.2, x + s * 0.12, y + s * 0.2, '#9a948a', 1.6)); }
     if (kind === 'key') { g.push(Ci(x - s * 0.3, y, s * 0.24, null, { st: '#e8c050', sw: s * 0.13 }), Ln(x - s * 0.06, y, x + s * 0.56, y, '#e8c050', s * 0.13), Ln(x + s * 0.32, y, x + s * 0.32, y + s * 0.22, '#e8c050', s * 0.11), Ln(x + s * 0.5, y, x + s * 0.5, y + s * 0.17, '#e8c050', s * 0.11)); }
+    if (kind === 'letter') {
+      const w = s * 1.15, h = s * 0.78, x0 = x - w / 2, y0 = y - h / 2;
+      g.push(R(x0, y0, w, h, '#f3ecdc', { rx: 1.5, st: '#b9ad92', sw: 1.2 }));
+      g.push(Pa(`M${n(x0)} ${n(y0)} L${n(x)} ${n(y0 + h * 0.56)} L${n(x0 + w)} ${n(y0)}`, { st: '#a89c82', sw: 1.4 }));
+      g.push(Pa(`M${n(x0)} ${n(y0 + h)} L${n(x - w * 0.12)} ${n(y0 + h * 0.6)} M${n(x0 + w)} ${n(y0 + h)} L${n(x + w * 0.12)} ${n(y0 + h * 0.6)}`, { st: '#d2c7ae', sw: 1 }));
+      g.push(Ci(x, y0 + h * 0.56, s * 0.15, '#b81f2e'), Ci(x - s * 0.04, y0 + h * 0.52, s * 0.05, '#e4606a', { op: 0.8 }));
+    }
     if (kind === 'coin') { g.push(Ci(x, y, s * 0.42, '#e8c050'), Ci(x, y, s * 0.28, null, { st: '#a87a22', sw: 1.8 })); }
     if (kind === 'coat') {
       g.push(Pa(`M${n(x - s * 0.52)} ${n(y - s * 0.28)} L${n(x - s * 0.18)} ${n(y - s * 0.5)} L${n(x)} ${n(y - s * 0.3)} L${n(x + s * 0.18)} ${n(y - s * 0.5)} L${n(x + s * 0.52)} ${n(y - s * 0.28)} L${n(x + s * 0.44)} ${n(y + s * 0.55)} L${n(x - s * 0.44)} ${n(y + s * 0.55)} Z`, { fill: '#9a7550', st: '#5e4228', sw: 1.4 }));
@@ -249,7 +275,7 @@
 
     // ---------------- the map (the shop from the cancel-do mocks, simplified)
     const objs = { counter: [[1, 4], [2, 4], [3, 4], [4, 4]], table: [[9, 8], [10, 8]], bench: [[10, 11], [11, 11]], plants: [[1, 13], [13, 13]], disp: [[13, 2], [13, 6], [13, 10]] };
-    const tgt = { x: 3, y: 3 }, gem = { x: 6, y: 12 }, me = { x: 10, y: 13 }, pick = { x: 11, y: 12 };
+    const tgt = { x: 3, y: 3 }, gem = { x: 6, y: 12 }, me = st.env ? { x: 6, y: 5 } : { x: 10, y: 13 }, pick = st.env ? { x: 7, y: 6 } : { x: 11, y: 12 };
     if (!A) {
       out.push(R(m.x, m.y, mw, mh, '#2a1c12'), R(m.x + c, m.y + c, mw - 2 * c, mh - 2 * c, '#ebe5d6'));
       for (let y = 1; y < 15; y++) out.push(Ln(m.x + c, m.y + y * c, m.x + mw - c, m.y + y * c, '#d8cfba', 1.2));
@@ -270,7 +296,7 @@
         if (y === 0 && [1, 2, 3, 4, 10, 11, 12, 13].includes(x)) g(x, y, 'b', '#d6a35a');
         else if (y === 15 && x === 7) g(x, y, '+', C.amber, 700);
         else if (edge) g(x, y, '#', '#3c4a52');
-        else if (!(st.floor && x === pick.x && y === pick.y)) g(x, y, '.', '#26313a');
+        else if (!((st.floor || st.env) && x === pick.x && y === pick.y)) g(x, y, '.', '#26313a');
       }
       for (const [x, y] of objs.counter) g(x, y, '=', '#a08458', 700);
       for (const [x, y] of objs.table) g(x, y, 'T', '#c4d4e2', 700);
@@ -280,6 +306,16 @@
     }
     const pc = cell(pick.x, pick.y);
     if (st.floor) { if (!A) out.push(glow(defs, pc.x, pc.y, c * 0.7, C.parch, 0.35)); out.push(icon('card', pc.x, pc.y, c * 0.55, A)); }
+    if (st.env && !A) out.push(R(pc.x - c * 0.42, pc.y - c * 0.3, c * 0.84, c * 0.62, '#6b4a2c', { rx: 3, st: '#4a321c', sw: 1.5 }));   // the little table
+    if (st.env === 'start') {                       // popped off the table: lifted 12 px, scale 1.25, cell box, dust, "+ 봉투"
+      const ly = pc.y - 12;
+      if (!A) out.push(glow(defs, pc.x, ly, c * 0.95, C.parch, 0.5));
+      out.push(R(pc.x - c * 0.55, pc.y - c * 0.55, c * 1.1, c * 1.1, null, { st: '#e8d48a', sw: 2, op: 0.9 }));
+      out.push(icon('letter', pc.x, ly, c * 0.55 * 1.25, A));
+      [[-0.32, 0.36], [0.05, 0.42], [0.36, 0.3]].forEach(([dx, dy]) => out.push(T(pc.x + dx * c, pc.y + dy * c, '+', L.small, A ? C.parch : '#fff6dc', { w: 700, op: 0.85, stroke: A ? undefined : '#5a4630', sw: A ? undefined : 3 })));
+      out.push(dotRing(pc.x, ly, c * 0.62, C.parch, 6, L.small, 0.5));
+      out.push(T(pc.x + c * 0.95, ly - c * 0.72, ENV_LABEL[lang], L.lbl + 2, '#fbf6e8', { w: 700, stroke: A ? undefined : '#0b0f14', sw: A ? undefined : 5 }));   // up-right: @ is up-left
+    } else if (st.env === 'mid') out.push(Pa(`M${n(pc.x - c * 0.3)} ${n(pc.y)} h${n(c * 0.6)}`, { st: C.parch, sw: 1.2, op: 0.3, dash: '2 4' }));
     const actor = (p, ch, col, outline) => {
       const q = cell(p.x, p.y);
       if (!A) out.push(`<ellipse cx="${q.x}" cy="${q.y + c * 0.36}" rx="${c * 0.32}" ry="${c * 0.1}" fill="#000" opacity="0.18"/>`);
@@ -300,7 +336,7 @@
     const showAnn = opt.ann !== false;
     let slots = [], target = null, flyFrom = null, flyKind = null, text = null;
     if (id === 'C') {
-      const items = st.items.length ? st.items : (st.fly ? ['card'] : []);
+      const items = st.fly ? [...st.items, st.fly] : st.items;
       if (items.length) {
         text = slug(L, o, lang, items, st.equip);
         const flying = st.fly ? text.seg.find(sg => sg.kind === st.fly) : null;
@@ -316,14 +352,15 @@
           if (A && f === 3 && sg.kind === 'coin') spans.push(`<tspan fill="${C.parch}">'</tspan>`);   // unseen-new prime
         }
         over.push(`<text x="${text.x0}" y="${text.y}" font-size="${text.fs}" dominant-baseline="central">${spans.join('')}</text>`);
-        if (st.fly) { target = { x: flying.cx, y: text.y }; flyFrom = pc; flyKind = 'card'; }
+        if (st.fly) { target = { x: flying.cx, y: text.y }; flyFrom = pc; flyKind = st.fly; }
         if (st.land === 'coat') { const eq = text.seg.find(sg => sg.role === 'equip'); target = { x: eq.cx, y: text.y }; flyFrom = tc; }
       }
     } else {
       slots = tray(id, L, o, st.items, st.equip);
       if (st.fly) {
-        const next = tray(id, L, o, ['card'], []);
-        target = next[0]; flyFrom = pc; flyKind = 'card';
+        const next = tray(id, L, o, [...st.items, st.fly], st.equip);
+        target = next[next.length - 1]; flyFrom = pc; flyKind = st.fly;
+        if (st.items.length) { const e = 0.61; slots = slots.map((sl, i) => ({ ...sl, x: sl.x + (next[i].x - sl.x) * e })); }   // B re-centres during the flight (easeInOutQuad at t 0.56)
         over.push(slotBirth(L, target.x, target.y, A));
       }
       if (id === 'A' && slots.length && !A) {                    // the pockets hang from the header line
@@ -333,7 +370,7 @@
           over.push(R(x0, (P ? L.hdr.y + L.hdr.h : L.shelfY - L.r - 6), x1 - x0, P ? L.shelfY - L.hdr.y - L.hdr.h + L.r + 10 : 2 * L.r + 12, '#0b0f14', { op: 0.92, rx: 8, st: '#1f2a30', sw: 1 }));
         }
       }
-      if (id === 'B' && (st.items.length >= 3 || st.equip.length)) {   // stage 2: the shelf appears
+      if (id === 'B' && (st.items.length >= 3 || st.equip.length) && slots.length) {   // stage 2: the shelf appears
         const xs = slots.map(s => s.x), half = (Math.max(...xs) - Math.min(...xs)) / 2 + L.r + 18, cx = (Math.max(...xs) + Math.min(...xs)) / 2;
         const sy = L.shelfY + L.r + (P ? 14 : 5);
         if (A) over.push(T(cx, sy + 2, '·'.repeat(Math.round(half * 2 / (L.small * 0.6 * 1.6))), L.small, C.parchDim, { ls: L.small * 0.35 }));
@@ -349,16 +386,18 @@
       over.push(Pa(fl.d, { st: col, sw: 2, dash: '6 8', op: flyKind ? 0.75 : 0.35 }));
       if (flyKind) {
         if (id === 'C') {                           // letters stream up, first letter leads
-          const word = THING.card[lang], chars = [...word];
-          over.push(icon('card', flyFrom.x, flyFrom.y, c * 0.5, A, 0.3));
-          chars.forEach((ch, i) => { const p = fl.at(0.74 - i * 0.08); over.push(T(p.x, p.y, ch, L.slugFs * 1.1, C.parch, { w: 700, op: 1 - i * 0.12, stroke: A ? undefined : '#0b0f14', sw: A ? undefined : 4 })); });
-          const p0 = fl.at(0.74), p1 = fl.at(0.8);
+          const word = THING[flyKind][lang], chars = [...word];
+          over.push(icon(flyKind, flyFrom.x, flyFrom.y, c * 0.5, A, 0.3));
+          const lead = flyKind === 'card' ? 0.74 : 0.56;   // the envelope's flight is short (it is picked up high on the map): show the letters further back on the path
+          chars.forEach((ch, i) => { const p = fl.at(lead - i * (flyKind === 'card' ? 0.08 : 0.1)); over.push(T(p.x, p.y, ch, L.slugFs * 1.1, C.parch, { w: 700, op: 1 - i * 0.12, stroke: A ? undefined : '#0b0f14', sw: A ? undefined : 4 })); });
+          const p0 = fl.at(lead), p1 = fl.at(lead + 0.06);
           over.push(Ln(p0.x, p0.y, p1.x, p1.y, C.parch, 2, { op: 0.6 }));
         } else {
-          [0.38, 0.44, 0.5].forEach((t, i) => { const p = fl.at(t); over.push(icon('card', p.x, p.y, L.icon * 1.1, A, [0.12, 0.25, 0.45][i])); });
+          const tilt = (p, svg) => flyKind === 'letter' && !A ? `<g transform="rotate(-14 ${n(p.x)} ${n(p.y)})">${svg}</g>` : svg;
+          [0.38, 0.44, 0.5].forEach((t, i) => { const p = fl.at(t); over.push(tilt(p, icon(flyKind, p.x, p.y, L.icon * 1.1, A, [0.12, 0.25, 0.45][i]))); });
           const p = fl.at(0.56);
           if (!A) over.push(glow(defs, p.x, p.y, L.icon * 1.4, C.parch, 0.4));
-          over.push(icon('card', p.x, p.y, L.icon * 1.2, A));
+          over.push(tilt(p, icon(flyKind, p.x, p.y, L.icon * 1.2, A)));
         }
         // the lift beat at the origin
         over.push(dotRing(flyFrom.x, flyFrom.y, c * 0.45, C.parch, 6, L.small, 0.5));
@@ -369,6 +408,11 @@
         over.push(Ln(target.x, target.y + (target.r || L.r) + 4, target.x, py - fs * 0.8, '#a8b4b8', 1.2, { op: 0.6, dash: '2 3' }));
         over.push(R(px - w / 2, py - fs * 0.85, w, fs * 1.7, '#06080c', { op: 0.88, rx: 3, st: '#3a4650', sw: 1 }), T(px, py, label, fs, '#c8d2d4'));
       }
+    }
+
+    if (st.env === 'landed') {
+      const tx = id === 'C' ? text.seg.find(sg => sg.kind === 'letter').cx : slots.find(sl => sl.kind === 'letter').x;
+      over.push(T(tx, L.shelfY + L.r + (P ? 26 : 16) + (id === 'B' ? 8 : 0), ENV_LABEL[lang], L.small, '#fbf6e8', { w: 700, op: 0.6 }));
     }
 
     // ---------------- opened tray (frame 5)
@@ -461,6 +505,7 @@
     const tg = (name, key, vals) => `<div><span>${name}</span>${vals.map(([v, lbl]) => `<a href="${link({ [key]: v })}"${Q[key] === v ? ' class="on"' : ''}>${lbl}</a>`).join('')}</div>`;
     const stage = (f) => id === 'B' ? ['stage 0', 'stage 1 · fly', 'stage 1', 'stage 2', 'stage 3', 'open'][f] : `${f}`;
     const flow = FRAMES.map(fr => `<figure class="frame">${phone(id, fr.id, Q.o, Q.s, Q.l)}<figcaption><b>${stage(fr.id)} · ${esc(fr[Q.l])}.</b> ${esc(op.caps[fr.id])}</figcaption></figure>`).join('');
+    const envFlow = ENV_FRAMES.map((fr, i) => `<figure class="frame">${phone(id, fr.id, Q.o, Q.s, Q.l)}<figcaption><b>${esc(fr[Q.l])}.</b> ${esc(op.env[i])}</figcaption></figure>`).join('');
     const cells = (o) => ['color', 'ascii'].flatMap(s => ['ko', 'en'].map(l => `<div class="cell">${phone(id, 4, o, s, l)}<div class="tag">${combo(o, s, l)}</div></div>`)).join('');
     document.body.innerHTML = `<main>
       <header class="top"><h1>${op.id}. ${esc(op.title)}<small>${esc(op.ko)}</small></h1>${nav(id)}</header>
@@ -469,6 +514,8 @@
       <div class="toggles">${tg('orientation', 'o', [['p', 'portrait'], ['l', 'landscape']])}${tg('skin', 's', [['color', 'colour'], ['ascii', 'ASCII']])}${tg('language', 'l', [['ko', 'KO'], ['en', 'EN']])}</div>
       <h2>${id === 'B' ? 'Growth' : 'Flow'} <small>· ${combo(Q.o, Q.s, Q.l)} · dashed line = the fly path (annotation, not drawn in game); → (x, y) = landing target</small></h2>
       <div class="flow ${Q.o}">${flow}</div>
+      <h2 id="envelope">Envelope pickup <small>· the SFX/VFX letter clip (r2_letter_color) landing here instead of in 행동, after frame 3's items · ${combo(Q.o, Q.s, Q.l)} · shots: <a href="../../../inventory/shots/opt${id}-envelope-start.png">start</a> · <a href="../../../inventory/shots/opt${id}-envelope-mid.png">mid</a> · <a href="../../../inventory/shots/opt${id}-envelope-landed.png">landed</a></small></h2>
+      <div class="flow ${Q.o}">${envFlow}</div>
       ${specBlock(id)}
       <h2>Matrix <small>· frame 4 (equipment unlocked) in every orientation × skin × language</small></h2>
       <div class="matrix p">${cells('p')}</div>
@@ -483,6 +530,7 @@
         <p>${esc(op.line)}</p>
         <div class="pair"><a href="opt${op.id}.html">${phone(op.id, 1, 'p', 'color', 'ko')}<div>first pickup flies up</div></a><a href="opt${op.id}.html">${phone(op.id, 4, 'p', 'color', 'ko')}<div>items + equipment</div></a></div>
         <div class="pair"><a href="opt${op.id}.html?o=p&s=ascii&l=en">${phone(op.id, 3, 'p', 'ascii', 'en')}<div>several · ASCII EN</div></a><a href="opt${op.id}.html?o=l&s=color&l=ko">${phone(op.id, 4, 'l', 'color', 'ko')}<div>landscape · in the header</div></a></div>
+        <div class="pair env">${ENV_FRAMES.map(fr => `<a href="../../../inventory/shots/opt${op.id}-envelope-${{ e0: 'start', e1: 'mid', e2: 'landed' }[fr.id]}.png">${phone(op.id, fr.id, 'p', 'color', 'ko')}<div>${esc(fr.en)}</div></a>`).join('')}</div>
         <div class="how"><b>Items</b> ${esc(op.model[0][1])}<br><b>Equipment</b> ${esc(op.model[1][1])}</div>
         <a class="go" href="opt${op.id}.html">open ${op.id} →</a>
       </section>`).join('');
